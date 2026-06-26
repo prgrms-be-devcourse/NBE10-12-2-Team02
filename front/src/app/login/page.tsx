@@ -1,13 +1,14 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 
 export default function LoginPage() {
   const [loginId, setLoginId] = useState("");
   const [password, setPassword] = useState("");
 
   const handleLogin = (e: React.FormEvent) => {
-    e.preventDefault(); // 엔터 시 페이지 새로고침 막기
+    e.preventDefault();
 
     if (loginId.trim() === "") {
       alert("아이디를 입력해주세요.");
@@ -56,9 +57,9 @@ export default function LoginPage() {
 
         <p className="text-center text-sm text-gray-500 mt-6">
           아직 회원이 아니신가요?{" "}
-          <span className="text-blue-600 font-semibold cursor-pointer hover:underline">
+          <Link href="/signup" className="text-blue-600 font-semibold cursor-pointer hover:underline">
             회원가입
-          </span>
+          </Link>
         </p>
       </form>
     </div>

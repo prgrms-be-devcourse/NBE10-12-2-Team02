@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 
 export default function SignupPage() {
   const [name, setName] = useState("");
@@ -96,6 +97,13 @@ export default function SignupPage() {
         >
           회원가입 하기
         </button>
+
+        <p className="text-center text-sm text-gray-500 mt-6">
+          이미 계정이 있으신가요?{" "}
+          <Link href="/login" className="text-blue-600 font-semibold cursor-pointer hover:underline">
+            로그인
+          </Link>
+        </p>
       </form>
     </div>
   );
