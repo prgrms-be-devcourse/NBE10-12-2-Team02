@@ -6,7 +6,9 @@ export default function LoginPage() {
   const [loginId, setLoginId] = useState("");
   const [password, setPassword] = useState("");
 
-  const handleLogin = () => {
+  const handleLogin = (e: React.FormEvent) => {
+    e.preventDefault(); // 엔터 시 페이지 새로고침 막기
+
     if (loginId.trim() === "") {
       alert("아이디를 입력해주세요.");
       return;
@@ -16,14 +18,13 @@ export default function LoginPage() {
       return;
     }
 
-    // 여기까지 왔으면 둘 다 입력된 상태
     console.log("로그인 시도:", loginId, password);
     alert("로그인 시도! (나중에 여기서 API 호출)");
   };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100">
-      <div className="w-96 p-10 bg-white rounded-2xl shadow-xl">
+      <form onSubmit={handleLogin} className="w-96 p-10 bg-white rounded-2xl shadow-xl">
         <h1 className="text-3xl font-bold text-center mb-2 text-gray-800">
           TicketingGo 🎫
         </h1>
@@ -47,7 +48,7 @@ export default function LoginPage() {
         />
 
         <button
-          onClick={handleLogin}
+          type="submit"
           className="w-full p-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-bold transition"
         >
           로그인
@@ -59,7 +60,7 @@ export default function LoginPage() {
             회원가입
           </span>
         </p>
-      </div>
+      </form>
     </div>
   );
 }
