@@ -10,7 +10,7 @@ export default function Navbar() {
         {/* 로고 */}
         <Link href="/" className="flex items-center gap-2 font-bold text-xl text-blue-600">
           <Ticket size={24} />
-          TicketingGo
+          티케팅고
         </Link>
 
         {/* 메뉴 */}
