@@ -20,7 +20,7 @@ public class ConcertController {
     private final ConcertService concertService;
 
     @GetMapping("/{concertId}/schedules/{scheduleId}/seats")
-    public RsData<SeatSelectionDto> getSeatSelectionPage(
+    public RsData<SeatSelectionDto> getSeatSelection(
             @PathVariable Long concertId,
             @PathVariable Long scheduleId) {
 
