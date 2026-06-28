@@ -24,12 +24,12 @@ public class ConcertController {
             @PathVariable Long concertId,
             @PathVariable Long scheduleId) {
 
-        SeatSelectionDto responseData = concertService.getSeatSelection(concertId, scheduleId);
+        SeatSelectionDto rsData = concertService.getSeatSelection(concertId, scheduleId);
 
         return new RsData<>(
                 "200-1",
                 "좌석 선택 페이지 조회 성공",
-                responseData
+                rsData
         );
     }
 }
