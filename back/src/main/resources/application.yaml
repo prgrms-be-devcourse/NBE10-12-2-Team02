@@ -20,11 +20,7 @@ spring:
         use_sql_comments: true
   data:
     redis:
-      cluster:
-        nodes:
-          - 127.0.0.1:6379
-          - 127.0.0.1:6380
-          - 127.0.0.1:6381
-        max-redirects: 3
+      host: 127.0.0.1
+      port: 6379
 springdoc:
   default-produces-media-type: application/json;charset=UTF-8
