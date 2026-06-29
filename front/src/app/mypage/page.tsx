@@ -69,6 +69,7 @@ export default function MyPage() {
           <div>
             <p className="text-gray-400 text-sm">안녕하세요</p>
 <<<<<<< HEAD
+<<<<<<< HEAD
             <h1 className="text-2xl font-bold text-gray-800">{user.name}님 👋</h1>
           </div>
 =======
@@ -77,6 +78,10 @@ export default function MyPage() {
             </h1>
           </div>
           {/* 빨간 박스 버튼 */}
+>>>>>>> main
+=======
+            <h1 className="text-2xl font-bold text-gray-800">{user.name}님 👋</h1>
+          </div>
 >>>>>>> main
           <button
             onClick={() => setShowWithdrawModal(true)}
@@ -98,11 +103,15 @@ export default function MyPage() {
 
         {/* 내 티켓 목록 */}
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> main
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-lg font-bold text-gray-700">내 티켓</h2>
           <span className="text-sm text-gray-400">{tickets.length}개의 티켓</span>
         </div>
 
+<<<<<<< HEAD
         <div className="space-y-6">
           {pagedTickets.map((ticket) => (
 =======
@@ -110,10 +119,15 @@ export default function MyPage() {
         <div className="space-y-6">
           {tickets.map((ticket) => (
 >>>>>>> main
+=======
+        <div className="space-y-6">
+          {pagedTickets.map((ticket) => (
+>>>>>>> main
             <div
               key={ticket.ticketId}
               className="flex shadow-md rounded-2xl overflow-hidden"
             >
+<<<<<<< HEAD
 <<<<<<< HEAD
               {/* 왼쪽 포스터 */}
               <div className="relative flex-shrink-0 w-36 bg-gradient-to-br from-blue-200 to-indigo-300 flex items-center justify-center text-white font-bold text-sm">
@@ -168,53 +182,47 @@ export default function MyPage() {
                   </p>
 =======
               {/* 왼쪽 포스터 영역 */}
+=======
+              {/* 왼쪽 포스터 */}
+>>>>>>> main
               <div className="relative flex-shrink-0 w-36 bg-gradient-to-br from-blue-200 to-indigo-300 flex items-center justify-center text-white font-bold text-sm">
                 포스터
-                {/* 오른쪽 반원 홈 */}
-                <div className="absolute -right-3 top-1/2 -translate-y-1/2 w-6 h-6 bg-gray-50 rounded-full z-10" />
+                {/* 반원 홈 제거 */}
               </div>
 
-              {/* 점선 구분선 */}
+              {/* 점선 */}
               <div className="border-l-2 border-dashed border-gray-200 my-4" />
 
-              {/* 오른쪽 정보 영역 — 오돌토돌한 오른쪽 끝 */}
-              <div
-                className="flex-1 bg-white p-6"
-                style={{
-                  // 오른쪽 끝을 오돌토돌하게 (반원들이 파인 모양)
-                  maskImage: `radial-gradient(circle 8px at 100% 8px, transparent 100%, black 0),
-                               radial-gradient(circle 8px at 100% 24px, transparent 100%, black 0),
-                               radial-gradient(circle 8px at 100% 40px, transparent 100%, black 0),
-                               radial-gradient(circle 8px at 100% 56px, transparent 100%, black 0),
-                               radial-gradient(circle 8px at 100% 72px, transparent 100%, black 0),
-                               radial-gradient(circle 8px at 100% 88px, transparent 100%, black 0),
-                               radial-gradient(circle 8px at 100% 104px, transparent 100%, black 0),
-                               radial-gradient(circle 8px at 100% 120px, transparent 100%, black 0),
-                               radial-gradient(circle 8px at 100% 136px, transparent 100%, black 0),
-                               radial-gradient(circle 8px at 100% 152px, transparent 100%, black 0),
-                               linear-gradient(black, black)`,
-                  maskComposite: "intersect",
-                  WebkitMaskImage: `radial-gradient(circle 8px at 100% 8px, transparent 100%, black 0),
-                                    radial-gradient(circle 8px at 100% 24px, transparent 100%, black 0),
-                                    radial-gradient(circle 8px at 100% 40px, transparent 100%, black 0),
-                                    radial-gradient(circle 8px at 100% 56px, transparent 100%, black 0),
-                                    radial-gradient(circle 8px at 100% 72px, transparent 100%, black 0),
-                                    radial-gradient(circle 8px at 100% 88px, transparent 100%, black 0),
-                                    radial-gradient(circle 8px at 100% 104px, transparent 100%, black 0),
-                                    radial-gradient(circle 8px at 100% 120px, transparent 100%, black 0),
-                                    radial-gradient(circle 8px at 100% 136px, transparent 100%, black 0),
-                                    radial-gradient(circle 8px at 100% 152px, transparent 100%, black 0),
-                                    linear-gradient(black, black)`,
-                  WebkitMaskComposite: "destination-in",
-                }}
-              >
+              {/* 오른쪽 정보 */}
+              <div className="flex-1 bg-white p-6">
                 <div className="flex justify-between items-start mb-3">
+<<<<<<< HEAD
                   <h3 className="font-bold text-gray-800 text-lg">
                     {ticket.concertName}
                   </h3>
                   <span className="px-2 py-1 text-xs bg-green-100 text-green-700 rounded-full font-semibold">
                     {ticket.status}
                   </span>
+>>>>>>> main
+=======
+                  <h3 className="font-bold text-gray-800 text-lg">{ticket.concertName}</h3>
+                  <div className="flex items-center gap-2">
+                    {/* 취소 버튼을 뱃지 왼쪽에 */}
+                    {ticket.status !== "CANCELED" && (
+                      <button
+                        onClick={() => setCancelTargetId(ticket.ticketId)}
+                        className="text-xs bg-red-500 text-white hover:bg-red-700 px-3 py-1 rounded-lg transition font-bold"
+                      >
+                        예매 취소
+                      </button>
+                    )}
+                    <span className={`px-2 py-1 text-xs rounded-full font-semibold ${ticket.status === "CANCELED"
+                        ? "bg-gray-100 text-gray-400"
+                        : "bg-green-100 text-green-700"
+                      }`}>
+                      {ticket.status === "CANCELED" ? "취소됨" : "예매완료"}
+                    </span>
+                  </div>
 >>>>>>> main
                 </div>
 
@@ -241,10 +249,14 @@ export default function MyPage() {
               </div>
             </div>
 <<<<<<< HEAD
+<<<<<<< HEAD
           ))}   
 =======
           ))}
         </div>
+>>>>>>> main
+=======
+          ))}   
 >>>>>>> main
       </div>
 
