@@ -13,10 +13,6 @@ public class ServiceException extends RuntimeException {
         this.errorCode = errorCode;
     }
 
-    public int getHttpStatusCode() {
-        return errorCode.getStatusCode();
-    }
-
     public RsData<Void> getRsData() {
         return new RsData<>(
                 errorCode.getResultCode(),
