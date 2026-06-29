@@ -4,7 +4,6 @@ import com.back.global.jpa.entity.BaseEntity;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-
 import java.time.LocalDate;
 
 @Entity
@@ -12,6 +11,7 @@ import java.time.LocalDate;
 @NoArgsConstructor
 @Table(name = "users")
 public class User extends BaseEntity {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long userId;
@@ -33,4 +33,24 @@ public class User extends BaseEntity {
     private LoginType loginType;
 
     private LocalDate deletedAt;
+
+    private User(String id, String email, String password, String name, LoginType loginType) {
+        this.id = id;
+        this.email = email;
+        this.password = password;
+        this.name = name;
+        this.loginType = loginType;
+    }
+
+    public static User create(String id, String email, String password, String name, LoginType loginType) {
+        return new User(id, email, password, name, loginType);
+    }
+
+    public void withdraw() {
+        this.deletedAt = LocalDate.now();
+    }
+
+    public boolean isDeleted() {
+        return this.deletedAt != null;
+    }
 }
