@@ -34,6 +34,7 @@ public enum ErrorCode {
     INVALID_CONCERT_SCHEDULE("400-1", "해당 콘서트의 회차가 아닙니다."),
 
     // Seat
+    SEAT_NOT_FOUND("404-7", "존재하지 않는 좌석입니다."),
     SEAT_SOLD_OUT("400-2", "이미 매진된 좌석입니다."),
     SEAT_ALREADY_SOLD("409-3", "이미 판매 완료된 좌석입니다."),
     SEAT_HELD_BY_OTHER_USER("409-4", "다른 사용자가 선택 중인 좌석입니다."),

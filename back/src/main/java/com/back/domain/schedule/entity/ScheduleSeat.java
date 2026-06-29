@@ -30,6 +30,10 @@ public class ScheduleSeat extends BaseEntity {
     @Column(nullable = false)
     private SeatStatus seatStatus;
 
+    public void updateStatus(SeatStatus seatStatus) {
+        this.seatStatus = seatStatus;
+    }
+
     public static ScheduleSeat create(Schedule schedule, String seatNumber, Integer seatPrice, String gradeName, SeatStatus seatStatus) {
         ScheduleSeat seat = new ScheduleSeat();
         seat.schedule = schedule;
