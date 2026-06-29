@@ -1,6 +1,6 @@
 package com.back.domain.concert.controller;
 
-import com.back.domain.concert.dto.SeatSelectionDto;
+import com.back.domain.concert.dto.SeatSelectionResponse;
 import com.back.domain.concert.service.ConcertService;
 import com.back.global.annotation.ApiV1;
 import com.back.global.rsData.RsData;
@@ -20,11 +20,11 @@ public class ConcertController {
     private final ConcertService concertService;
 
     @GetMapping("/{concertId}/schedules/{scheduleId}/seats")
-    public RsData<SeatSelectionDto> getSeatSelection(
+    public RsData<SeatSelectionResponse> getSeatSelection(
             @PathVariable Long concertId,
             @PathVariable Long scheduleId) {
 
-        SeatSelectionDto rsData = concertService.getSeatSelection(concertId, scheduleId);
+        SeatSelectionResponse rsData = concertService.getSeatSelection(concertId, scheduleId);
 
         return new RsData<>(
                 "200-1",

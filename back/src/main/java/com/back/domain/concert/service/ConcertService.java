@@ -1,7 +1,7 @@
 package com.back.domain.concert.service;
 
-import com.back.domain.concert.dto.SeatSelectionDto;
-import com.back.domain.concert.dto.SeatSelectionDto.SeatDetailDto;
+import com.back.domain.concert.dto.SeatSelectionResponse;
+import com.back.domain.concert.dto.SeatSelectionResponse.SeatDetailResponse;
 import com.back.domain.concert.repository.ConcertRepository;
 import com.back.domain.schedule.entity.Schedule;
 import com.back.domain.schedule.entity.ScheduleSeat;
@@ -24,7 +24,7 @@ public class ConcertService {
     private final ScheduleRepository scheduleRepository;
     private final ConcertRepository concertRepository;
 
-    public SeatSelectionDto getSeatSelection(Long concertId, Long scheduleId) {
+    public SeatSelectionResponse getSeatSelection(Long concertId, Long scheduleId) {
         if (!concertRepository.existsById(concertId)) {
             throw new ServiceException("404-1", "존재하지 않는 콘서트입니다.");
         }
@@ -44,15 +44,15 @@ public class ConcertService {
                         (v1, v2) -> v1
                 ));
 
-        List<SeatDetailDto> seatDetailList = scheduleSeats.stream()
-                .map(seat -> new SeatDetailDto(
+        List<SeatDetailResponse> seatDetailList = scheduleSeats.stream()
+                .map(seat -> new SeatDetailResponse(
                         seat.getSeatNumber(),
                         seat.getSeatStatus(),
                         seat.getGradeName()
                 ))
                 .collect(Collectors.toList());
 
-        return new SeatSelectionDto(
+        return new SeatSelectionResponse(
                 concertId,
                 scheduleId,
                 pricesMap,

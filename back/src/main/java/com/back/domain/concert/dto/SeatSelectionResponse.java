@@ -5,13 +5,13 @@ import com.back.domain.schedule.entity.SeatStatus;
 import java.util.List;
 import java.util.Map;
 
-public record SeatSelectionDto(
+public record SeatSelectionResponse(
         Long concertId,
         Long scheduleId,
         Map<String, Integer> prices,
-        List<SeatDetailDto> seats
+        List<SeatDetailResponse> seats
 ) {
-    public record SeatDetailDto(
+    public record SeatDetailResponse(
             String seatNumber,
             SeatStatus seatStatus,
             String gradeName
