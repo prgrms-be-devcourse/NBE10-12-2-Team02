@@ -43,9 +43,14 @@ export default function SignupPage() {
   return (
     <div className="h-screen overflow-hidden flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100">
       <form onSubmit={handleSignup} className="w-96 p-10 bg-white rounded-2xl shadow-xl">
-        <Link href="/" className="block text-3xl font-bold text-center mb-8 text-gray-800">
-          티케팅고 🎫
-        </Link>
+        <div className="text-center mb-6">
+          <Link href="/" className="block text-3xl font-bold text-gray-800">
+            티케팅고 🎫
+          </Link>
+          <p className="mt-4 text-2xl font-bold text-gray-700">
+            회원가입
+          </p>
+        </div>
 
         <input
           type="text"
