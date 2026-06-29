@@ -30,7 +30,7 @@ public enum ErrorCode {
 
     // Schedule
     CONCERT_SCHEDULE_EMPTY("404-4", "등록된 회차가 없습니다."),
-    SCHEDULE_NOT_FOUND("404-3", "존재하지 않는 회차입니다."),
+    SCHEDULE_NOT_FOUND("404-5", "존재하지 않는 회차입니다."),
     INVALID_CONCERT_SCHEDULE("400-1", "해당 콘서트의 회차가 아닙니다."),
 
     // Seat
@@ -39,7 +39,7 @@ public enum ErrorCode {
     SEAT_HELD_BY_OTHER_USER("409-4", "다른 사용자가 선택 중인 좌석입니다."),
 
     // Ticket
-    TICKET_NOT_FOUND_FOR_USER("404-5", "해당 유저의 티켓이 존재하지 않습니다."),
+    TICKET_NOT_FOUND_FOR_USER("404-6", "해당 유저의 티켓이 존재하지 않습니다."),
     TICKET_ALREADY_CANCELLED("400-3", "이미 취소된 티켓입니다.");
 
 
