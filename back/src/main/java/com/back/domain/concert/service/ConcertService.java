@@ -13,6 +13,7 @@ import com.back.domain.schedule.entity.ScheduleSeat;
 import com.back.domain.schedule.repository.ScheduleRepository;
 import com.back.domain.schedule.repository.ScheduleSeatRepository;
 import com.back.domain.venue.entity.Venue;
+import com.back.global.exception.ErrorCode;
 import com.back.global.exception.ServiceException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -60,10 +61,10 @@ public class ConcertService {
     // 콘서트 상세 조회
     public ConcertDetailResponse getConcertDetail(Long concertId) {
         Concert concert = concertRepository.findById(concertId)
-                .orElseThrow(() -> new ServiceException("404-1", "존재하지 않는 콘서트입니다."));
+                .orElseThrow(() -> new ServiceException(ErrorCode.CONCERT_NOT_FOUND));
 
         Schedule schedule = scheduleRepository.findFirstByConcertConcertId(concertId)
-                .orElseThrow(() -> new ServiceException("404-2", "등록된 회차가 없습니다."));
+                .orElseThrow(() -> new ServiceException(ErrorCode.CONCERT_SCHEDULE_EMPTY));
 
         Venue venue = schedule.getVenue();
 
@@ -95,13 +96,13 @@ public class ConcertService {
     // 좌석 선택 조회 (기존)
     public SeatSelectionResponse getSeatSelection(Long concertId, Long scheduleId) {
         if (!concertRepository.existsById(concertId)) {
-            throw new ServiceException("404-1", "존재하지 않는 콘서트입니다.");
+            throw new ServiceException(ErrorCode.CONCERT_NOT_FOUND);
         }
         Schedule schedule = scheduleRepository.findById(scheduleId)
-                .orElseThrow(() -> new ServiceException("404-2", "존재하지 않는 회차입니다."));
+                .orElseThrow(() -> new ServiceException(ErrorCode.SCHEDULE_NOT_FOUND));
 
         if (!schedule.getConcert().getConcertId().equals(concertId)) {
-            throw new ServiceException("400-1", "해당 콘서트의 회차가 아닙니다.");
+            throw new ServiceException(ErrorCode.INVALID_CONCERT_SCHEDULE);
         }
 
         List<ScheduleSeat> scheduleSeats = scheduleSeatRepository.findByScheduleScheduleId(scheduleId);
