@@ -36,10 +36,9 @@ public class TicketService {
                 .orElseThrow(() -> new ServiceException("400-1", "해당 콘서트의 회차가 아닙니다."));
 
         ScheduleSeat scheduleSeat = scheduleSeatRepository
-                .findBySchedule_ScheduleIdAndSeatNumber(request.scheduleId(), request.seatNumber())
+                .findWithLockByScheduleIdAndSeatNumber(request.scheduleId(), request.seatNumber())
                 .orElseThrow(() -> new ServiceException("404-2", "해당 좌석이 존재하지 않습니다."));
 
-        //TODO 좌석상태가 HOLD일때만 가능하도록 ? + 동시성 문제 잡기
         if (scheduleSeat.getSeatStatus() == SeatStatus.SOLD_OUT) {
             throw new ServiceException("400-2", "이미 매진된 좌석입니다.");
         }
@@ -71,7 +70,7 @@ public class TicketService {
         userRepository.findById(userId)
                 .orElseThrow(() -> new ServiceException("404-1", "유저가 존재하지 않습니다."));
         Ticket ticket = ticketRepository.findById(ticketId)
-                .orElseThrow(() -> new ServiceException("404-1","해당 티켓이 존재하지 않습니다."));
+                .orElseThrow(() -> new ServiceException("404-2","해당 티켓이 존재하지 않습니다."));
         ticket.updateIsValid(false);
     }
 
