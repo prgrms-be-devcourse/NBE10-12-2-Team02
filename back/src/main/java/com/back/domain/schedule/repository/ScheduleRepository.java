@@ -12,4 +12,7 @@ public interface ScheduleRepository extends JpaRepository<Schedule, Long> {
     Optional<Schedule> findFirstByConcertConcertId(Long concertId);
 
     List<Schedule> findByConcertConcertId(Long concertId);
+
+    // 팀원 추가: scheduleId + concertId로 조회
+    Optional<Schedule> findByScheduleIdAndConcert_ConcertId(Long scheduleId, Long concertId);
 }
