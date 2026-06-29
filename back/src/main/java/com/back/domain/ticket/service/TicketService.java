@@ -39,7 +39,7 @@ public class TicketService {
                 .findWithLockByScheduleIdAndSeatNumber(request.scheduleId(), request.seatNumber())
                 .orElseThrow(() -> new ServiceException("404-2", "해당 좌석이 존재하지 않습니다."));
 
-        if (scheduleSeat.getSeatStatus() == SeatStatus.SOLD_OUT) {
+        if (scheduleSeat.getSeatStatus() != SeatStatus.HOLD) {
             throw new ServiceException("400-2", "이미 매진된 좌석입니다.");
         }
 
@@ -67,11 +67,16 @@ public class TicketService {
     }
     @Transactional
     public void cancelTicket(Long userId, Long ticketId) {
-        userRepository.findById(userId)
-                .orElseThrow(() -> new ServiceException("404-1", "유저가 존재하지 않습니다."));
-        Ticket ticket = ticketRepository.findById(ticketId)
-                .orElseThrow(() -> new ServiceException("404-2","해당 티켓이 존재하지 않습니다."));
+
+        Ticket ticket = ticketRepository.findByTicketIdAndUser_UserId(ticketId, userId)
+                .orElseThrow(() -> new ServiceException("404-2", "해당 티켓이 존재하지 않습니다."));
+
+        if (!ticket.isValid()) {
+            throw new ServiceException("400-3", "이미 취소된 티켓입니다.");
+        }
+
         ticket.updateIsValid(false);
+        ticket.getScheduleSeat().updateSeatStatus(SeatStatus.AVAILABLE);
     }
 
     public String createTicketNumber() {
