@@ -2,8 +2,12 @@ package com.back.domain.concert.service;
 
 import com.back.domain.concert.dto.SeatSelectionDto;
 import com.back.domain.concert.dto.SeatSelectionDto.SeatDetailDto;
+import com.back.domain.concert.repository.ConcertRepository;
+import com.back.domain.schedule.entity.Schedule;
 import com.back.domain.schedule.entity.ScheduleSeat;
+import com.back.domain.schedule.repository.ScheduleRepository;
 import com.back.domain.schedule.repository.ScheduleSeatRepository;
+import com.back.global.exception.ServiceException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -17,8 +21,19 @@ import java.util.stream.Collectors;
 @Transactional(readOnly = true)
 public class ConcertService {
     private final ScheduleSeatRepository scheduleSeatRepository;
+    private final ScheduleRepository scheduleRepository;
+    private final ConcertRepository concertRepository;
 
     public SeatSelectionDto getSeatSelection(Long concertId, Long scheduleId) {
+        if (!concertRepository.existsById(concertId)) {
+            throw new ServiceException("404-1", "존재하지 않는 콘서트입니다.");
+        }
+        Schedule schedule = scheduleRepository.findById(scheduleId)
+                .orElseThrow(() -> new ServiceException("404-2", "존재하지 않는 회차입니다."));
+
+        if (!schedule.getConcert().getConcertId().equals(concertId)) {
+            throw new ServiceException("400-1", "해당 콘서트의 회차가 아닙니다.");
+        }
 
         List<ScheduleSeat> scheduleSeats = scheduleSeatRepository.findByScheduleScheduleId(scheduleId);
 
