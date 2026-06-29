@@ -5,6 +5,7 @@ import com.back.domain.ticket.dto.PaymentTicketResponse;
 import com.back.domain.ticket.service.TicketService;
 import com.back.global.annotation.ApiV1;
 import com.back.global.rsData.RsData;
+import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -22,6 +23,7 @@ public class TicketController {
 
     @PostMapping("/reserve")
     @ResponseStatus(HttpStatus.CREATED)
+    @Operation(summary = "결제 및 티켓 생성", description = "결제 및 티켓 생성 API")
     public RsData<PaymentTicketResponse> createTicket(
             @RequestHeader(value = "userId") Long userId, @RequestBody @Valid PaymentTicketRequest request) {
         PaymentTicketResponse response = ticketService.createTicket(userId, request);
