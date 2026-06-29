@@ -36,4 +36,21 @@ public class Ticket extends BaseEntity {
 
     @Column(nullable = false)
     private boolean isValid = true;
+
+    public static Ticket create(
+            User user,
+            Schedule schedule,
+            ScheduleSeat scheduleSeat,
+            String ticketNumber,
+            int ticketPrice
+    ) {
+        Ticket ticket = new Ticket();
+        ticket.user = user;
+        ticket.schedule = schedule;
+        ticket.scheduleSeat = scheduleSeat;
+        ticket.ticketNumber = ticketNumber;
+        ticket.ticketPrice = ticketPrice;
+        ticket.isValid = true;
+        return ticket;
+    }
 }
