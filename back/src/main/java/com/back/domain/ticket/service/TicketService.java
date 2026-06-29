@@ -66,6 +66,14 @@ public class TicketService {
                 ticket.isValid()
         );
     }
+    @Transactional
+    public void cancelTicket(Long userId, Long ticketId) {
+        userRepository.findById(userId)
+                .orElseThrow(() -> new ServiceException("404-1", "유저가 존재하지 않습니다."));
+        Ticket ticket = ticketRepository.findById(ticketId)
+                .orElseThrow(() -> new ServiceException("404-1","해당 티켓이 존재하지 않습니다."));
+        ticket.updateIsValid(false);
+    }
 
     public String createTicketNumber() {
         return UUID.randomUUID().toString();

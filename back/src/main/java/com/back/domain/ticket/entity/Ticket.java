@@ -53,4 +53,7 @@ public class Ticket extends BaseEntity {
         ticket.isValid = true;
         return ticket;
     }
+    public void updateIsValid(boolean isValid) {
+        this.isValid = isValid;
+    }
 }

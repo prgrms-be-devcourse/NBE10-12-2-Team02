@@ -33,4 +33,16 @@ public class TicketController {
                 response
         );
     }
+
+    @PatchMapping("/cancel/{ticketId}")
+    @Operation(summary = "결제 취소", description = "결제 취소 API")
+    public RsData<Void> cancelTicket(
+            @RequestHeader(value = "userId") Long userId, @PathVariable(value = "ticketId") Long ticketId) {
+        ticketService.cancelTicket(userId, ticketId);
+        return new RsData<>(
+                "200-1",
+                "티켓 취소 성공",
+                null
+        );
+    }
 }
