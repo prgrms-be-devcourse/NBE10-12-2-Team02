@@ -35,7 +35,6 @@ public class ConcertService {
 
     private static final long OCCUPY_TTL_SECONDS = 600;
 
-    //Redis가 EXISTS, HSET, EXPIRE를 하나의 원자적 명령으로 실행
     private static final RedisScript<Long> OCCUPY_SCRIPT = new DefaultRedisScript<>(
             """
                     if redis.call('EXISTS', KEYS[1]) == 0 then
