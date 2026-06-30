@@ -10,6 +10,7 @@ import com.back.global.exception.ErrorCode;
 import com.back.global.exception.ServiceException;
 import com.back.global.rq.Rq;
 import com.back.global.rsData.RsData;
+import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -30,6 +31,7 @@ public class AuthController {
     private Number accessTokenExpirationSeconds;
 
     @PostMapping("/login")
+    @Operation(summary = "로그인", description = "로그인 API")
     public RsData<LoginResponse> login(@RequestBody @Valid LoginRequest request) {
         User user = userService.findById(request.id())
                 .orElseThrow(() -> new ServiceException(ErrorCode.AUTH_ID_NOT_FOUND));
@@ -51,6 +53,21 @@ public class AuthController {
                 "200-1",
                 "로그인 성공 및 인증 토큰이 발급되었습니다.",
                 LoginResponse.of(accessToken, "Bearer", accessTokenExpirationSeconds)
+        );
+    }
+
+    @PostMapping("/logout")
+    @Operation(summary = "로그아웃", description = "로그아웃 API")
+    public RsData<Void> logout() {
+
+        String refreshToken = rq.getCookieValue("refreshToken", "");
+        authTokenService.logout(refreshToken);
+
+        rq.deleteCookie("refreshToken");
+
+        return new RsData<>(
+                "200-1",
+                "로그아웃이 완료되었습니다. 토큰 및 세션 정보가 무효화되었습니다."
         );
     }
 }
