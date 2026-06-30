@@ -117,7 +117,7 @@ public class ConcertService {
 
     @Transactional
     public void updateSeatStatusToHold(Long scheduleId, String seatNumber) {
-        ScheduleSeat scheduleSeat = scheduleSeatRepository.findByScheduleScheduleIdAndSeatNumber(scheduleId, seatNumber)
+        ScheduleSeat scheduleSeat = scheduleSeatRepository.findWithLockByScheduleIdAndSeatNumber(scheduleId, seatNumber)
                 .orElseThrow(() -> new ServiceException(ErrorCode.SEAT_NOT_FOUND));
 
         if (scheduleSeat.getSeatStatus() == SeatStatus.SOLD_OUT) {
