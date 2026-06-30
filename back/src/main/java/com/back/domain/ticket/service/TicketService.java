@@ -85,6 +85,15 @@ public class TicketService {
 
         ticket.updateIsValid(false);
         ticket.getScheduleSeat().updateSeatStatus(SeatStatus.AVAILABLE);
+
+        redisTemplate.delete(
+                String.format(
+                        "seat:occupy:%d:%d:%s",
+                        ticket.getSchedule().getConcert().getConcertId(),
+                        ticket.getSchedule().getScheduleId(),
+                        ticket.getScheduleSeat().getSeatNumber()
+                )
+        );
     }
 
     public String createTicketNumber() {
