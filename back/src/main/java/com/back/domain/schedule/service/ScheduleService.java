@@ -22,13 +22,9 @@ public class ScheduleService {
 
     public ShowScheduleResponse showSchedule(Long concertId,Long scheduleId) {
 
-        if (!concertRepository.existsById(concertId)) {
-            throw new ServiceException(ErrorCode.CONCERT_NOT_FOUND);
-        }
-
         Schedule schedule = scheduleRepository
                 .findByScheduleIdAndConcert_ConcertId(scheduleId, concertId)
-                .orElseThrow(() -> new ServiceException(ErrorCode.INVALID_CONCERT_SCHEDULE));
+                .orElseThrow(() -> new ServiceException(ErrorCode.CONCERT_NOT_FOUND_OR_MISMATCH));
 
         long remainingSeats = scheduleSeatRepository
                 .countBySchedule_ScheduleIdAndSeatStatus(scheduleId, SeatStatus.AVAILABLE);
