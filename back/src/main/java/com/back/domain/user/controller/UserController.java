@@ -2,7 +2,6 @@ package com.back.domain.user.controller;
 
 import com.back.domain.user.dto.SignupRequest;
 import com.back.domain.user.dto.SignupResponse;
-import com.back.domain.user.entity.User;
 import com.back.domain.user.service.UserService;
 import com.back.global.annotation.ApiV1;
 import com.back.global.rsData.RsData;
@@ -22,7 +21,6 @@ public class UserController {
 
     @PostMapping("/signin")
     public RsData<SignupResponse> signup(@RequestBody @Valid SignupRequest request) {
-        User user = userService.signup(request.id(), request.email(), request.password(), request.name());
-        return new RsData<>("200-1", "회원가입이 완료되었습니다.", new SignupResponse(user));
+        return new RsData<>("200-1", "회원가입이 완료되었습니다.", userService.signup(request));
     }
 }
