@@ -6,7 +6,7 @@ public record SignupResponse(
         Long userId,
         String loginType
 ) {
-    public SignupResponse(User user) {
-        this(user.getUserId(), user.getLoginType().name());
+    public static SignupResponse from(User user) {
+        return new SignupResponse(user.getUserId(), user.getLoginType().name());
     }
 }
