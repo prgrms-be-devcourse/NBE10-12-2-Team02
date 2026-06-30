@@ -110,7 +110,7 @@ public class CustomAuthenticationFilter extends OncePerRequestFilter {
         if (isMemberLoadedFromRefreshToken) {
             AuthTokenService.TokenResponse tokenResponse = authTokenService.refresh(refreshToken);
 
-            String actorAccessToken = "Bearer " + tokenResponse.accessToken();
+            String actorAccessToken = tokenResponse.accessToken();
             String actorRefreshToken = tokenResponse.refreshToken();
 
             rq.setHeader("Authorization", actorAccessToken);

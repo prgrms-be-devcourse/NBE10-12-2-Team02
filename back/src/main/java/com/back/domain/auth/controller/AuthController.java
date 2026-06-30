@@ -38,7 +38,7 @@ public class AuthController {
 
         AuthTokenService.TokenResponse tokenResponse = authTokenService.login(user);
 
-        String accessToken = "Bearer " + tokenResponse.accessToken();
+        String accessToken = tokenResponse.accessToken();
         String refreshToken = tokenResponse.refreshToken();
 
         rq.setCookie("refreshToken", refreshToken);
