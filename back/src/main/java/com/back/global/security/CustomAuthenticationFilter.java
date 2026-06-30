@@ -48,13 +48,11 @@ public class CustomAuthenticationFilter extends OncePerRequestFilter {
     }
 
     private void work(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
-        // 임시 코드(필터 적용 x)
         if (request.getRequestURI().startsWith("/api/")) {
             filterChain.doFilter(request, response);
             return;
         }
 
-        // 토큰 두개를 각각 불러옴
         String refreshToken = rq.getCookieValue("refreshToken", "");
         String authorization = rq.getHeader("Authorization", "");
 
@@ -65,25 +63,19 @@ public class CustomAuthenticationFilter extends OncePerRequestFilter {
             throw new ServiceException(ErrorCode.AUTH_LOGIN_REQUIRED);
         }
 
-        // Authorization 헤더가 존재하면 Bearer 형식이어야 함
         if (isAuthorizationExists && !authorization.startsWith("Bearer "))
             throw new ServiceException(ErrorCode.AUTH_INVALID_BEARER_HEADER);
 
-        // Bearer accessToken을 두개로 나누어 [1](accessToken)을 accessToken 변수에 넣음
         String accessToken = "";
         if (isAuthorizationExists) {
             String[] accessTokenBits = authorization.split(" ", 2);
             accessToken = accessTokenBits.length == 2 ? accessTokenBits[1] : "";
         }
 
-        // 토큰 두 개가 존재하는지 확인하는 변수
         boolean isAccessTokenExists = !accessToken.isBlank();
 
-        // 멤버 -> 받아온 jwt에서 payload를 통해 멤버 정보를 저장
-        // accessToken이 유효한지 확인 하는 변수 생성
         User user = null;
 
-        // accessToken이 유효하다면 -> payload에서 멤버값 추출 후 변수에 저장
         if (isAccessTokenExists) {
             Map<String, Object> payload = authTokenService.payload(accessToken);
 
@@ -107,7 +99,6 @@ public class CustomAuthenticationFilter extends OncePerRequestFilter {
             throw new ServiceException(ErrorCode.AUTH_INVALID_CREDENTIALS);
         }
 
-        // accessToken이 없거나 유효하지 않아 refreshToken으로 인증했다면 새 토큰을 응답에 내려준다.
         if (isMemberLoadedFromRefreshToken) {
             AuthTokenService.TokenResponse tokenResponse = authTokenService.refresh(refreshToken);
 
@@ -129,7 +120,6 @@ public class CustomAuthenticationFilter extends OncePerRequestFilter {
                 securityUser.getAuthorities()
         );
 
-        // 이 시점 이후부터는 시큐리티가 이 요청을 인증된 사용자의 요청이다.
         SecurityContextHolder
                 .getContext()
                 .setAuthentication(authentication);
