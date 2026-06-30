@@ -40,7 +40,6 @@ public class ConcertService {
         if ("latest".equals(sort)) {
             comparator = Comparator.comparing(Concert::getStartDate).reversed();
         } else {
-            // 기본값: closingSoon (마감 임박순)
             comparator = Comparator.comparing(Concert::getEndDate);
         }
 
