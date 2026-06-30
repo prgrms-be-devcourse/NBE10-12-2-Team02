@@ -11,14 +11,13 @@ import com.back.domain.ticket.entity.Ticket;
 import com.back.domain.ticket.repository.TicketRepository;
 import com.back.domain.user.entity.User;
 import com.back.domain.user.repository.UserRepository;
+import com.back.global.exception.ErrorCode;
 import com.back.global.exception.ServiceException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.UUID;
-
-import static com.back.global.exception.ErrorCode.*;
 
 @Service
 @RequiredArgsConstructor
@@ -32,18 +31,18 @@ public class TicketService {
     @Transactional
     public PaymentTicketResponse createTicket(Long userId, PaymentTicketRequest request) {
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new ServiceException(USER_NOT_FOUND));
+                .orElseThrow(() -> new ServiceException(ErrorCode.USER_NOT_FOUND));
 
         Schedule schedule = scheduleRepository
                 .findByScheduleIdAndConcert_ConcertId(request.scheduleId(), request.concertId())
-                .orElseThrow(() -> new ServiceException(INVALID_CONCERT_SCHEDULE));
+                .orElseThrow(() -> new ServiceException(ErrorCode.INVALID_CONCERT_SCHEDULE));
 
         ScheduleSeat scheduleSeat = scheduleSeatRepository
                 .findWithLockByScheduleIdAndSeatNumber(request.scheduleId(), request.seatNumber())
-                .orElseThrow(() -> new ServiceException(SEAT_NOT_FOUND));
+                .orElseThrow(() -> new ServiceException(ErrorCode.SEAT_NOT_FOUND));
 
         if (scheduleSeat.getSeatStatus() != SeatStatus.HOLD) {
-            throw new ServiceException(SEAT_SOLD_OUT);
+            throw new ServiceException(ErrorCode.SEAT_SOLD_OUT);
         }
 
         scheduleSeat.updateSeatStatus(SeatStatus.SOLD_OUT);
@@ -72,10 +71,10 @@ public class TicketService {
     public void cancelTicket(Long userId, Long ticketId) {
 
         Ticket ticket = ticketRepository.findByTicketIdAndUser_UserId(ticketId, userId)
-                .orElseThrow(() -> new ServiceException(TICKET_NOT_FOUND_FOR_USER));
+                .orElseThrow(() -> new ServiceException(ErrorCode.TICKET_NOT_FOUND_FOR_USER));
 
         if (!ticket.isValid()) {
-            throw new ServiceException(TICKET_ALREADY_CANCELLED);
+            throw new ServiceException(ErrorCode.TICKET_ALREADY_CANCELLED);
         }
 
         ticket.updateIsValid(false);

@@ -9,6 +9,7 @@ import com.back.domain.schedule.entity.ScheduleSeat;
 import com.back.domain.schedule.entity.SeatStatus;
 import com.back.domain.schedule.repository.ScheduleRepository;
 import com.back.domain.schedule.repository.ScheduleSeatRepository;
+import com.back.global.exception.ErrorCode;
 import com.back.global.exception.ServiceException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.StringRedisTemplate;
@@ -21,8 +22,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
-
-import static com.back.global.exception.ErrorCode.*;
 
 @Service
 @RequiredArgsConstructor
@@ -50,13 +49,13 @@ public class ConcertService {
 
     public SeatSelectionResponse getSeatSelection(Long concertId, Long scheduleId) {
         if (!concertRepository.existsById(concertId)) {
-            throw new ServiceException(CONCERT_NOT_FOUND);
+            throw new ServiceException(ErrorCode.CONCERT_NOT_FOUND);
         }
         Schedule schedule = scheduleRepository.findById(scheduleId)
-                .orElseThrow(() -> new ServiceException(SCHEDULE_NOT_FOUND));
+                .orElseThrow(() -> new ServiceException(ErrorCode.SCHEDULE_NOT_FOUND));
 
         if (!schedule.getConcert().getConcertId().equals(concertId)) {
-            throw new ServiceException(INVALID_CONCERT_SCHEDULE);
+            throw new ServiceException(ErrorCode.INVALID_CONCERT_SCHEDULE);
         }
 
         List<ScheduleSeat> scheduleSeats = scheduleSeatRepository.findByScheduleScheduleId(scheduleId);
@@ -65,7 +64,7 @@ public class ConcertService {
                 .collect(Collectors.toMap(
                         ScheduleSeat::getGradeName,
                         ScheduleSeat::getSeatPrice,
-                        (v1, v2) -> v1
+                        (oldPrice, newPrice) -> oldPrice
                 ));
 
         List<SeatDetailResponse> seatDetailList = scheduleSeats.stream()
@@ -87,10 +86,14 @@ public class ConcertService {
     @Transactional
     public SeatOccupyResponse seatOccupy(Long concertId, Long scheduleId, String seatNumber, Long userId) {
         ScheduleSeat scheduleSeat = scheduleSeatRepository.findByScheduleScheduleIdAndSeatNumber(scheduleId, seatNumber)
-                .orElseThrow(() -> new ServiceException(SEAT_NOT_FOUND));
+                .orElseThrow(() -> new ServiceException(ErrorCode.SEAT_NOT_FOUND));
 
         if (scheduleSeat.getSeatStatus() == SeatStatus.SOLD_OUT) {
-            throw new ServiceException(SEAT_ALREADY_SOLD);
+            throw new ServiceException(ErrorCode.SEAT_ALREADY_SOLD);
+        }
+
+        if (scheduleSeat.getSeatStatus() == SeatStatus.HOLD){
+            throw new ServiceException(ErrorCode.SEAT_ALREADY_HOLD);
         }
 
         String redisKey = String.format("seat:occupy:%d:%d:%s", concertId, scheduleId, scheduleSeat.getSeatNumber());
@@ -105,7 +108,7 @@ public class ConcertService {
         );
 
         if (result == null || result == 0L) {
-            throw new ServiceException(SEAT_HELD_BY_OTHER_USER);
+            throw new ServiceException(ErrorCode.SEAT_HELD_BY_OTHER_USER);
         }
 
         scheduleSeat.updateSeatStatus(SeatStatus.HOLD);
