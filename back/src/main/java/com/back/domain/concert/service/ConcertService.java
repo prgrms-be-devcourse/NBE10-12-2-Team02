@@ -147,19 +147,15 @@ public class ConcertService {
                         (oldPrice, newPrice) -> oldPrice
                 ));
 
-        List<SeatDetailResponse> seatDetailList = scheduleSeats.stream()
-                .map(seat -> new SeatDetailResponse(
-                        seat.getSeatNumber(),
-                        seat.getSeatStatus(),
-                        seat.getGradeName()
-                ))
-                .collect(Collectors.toList());
+        List<SeatDetailResponse> seatResponses = scheduleSeats.stream()
+                .map(SeatDetailResponse::from)
+                .toList();
 
-        return new SeatSelectionResponse(
+        return SeatSelectionResponse.of(
                 concertId,
                 scheduleId,
                 pricesMap,
-                seatDetailList
+                seatResponses
         );
     }
 

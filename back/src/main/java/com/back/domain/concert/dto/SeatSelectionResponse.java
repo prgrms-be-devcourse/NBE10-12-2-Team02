@@ -1,5 +1,6 @@
 package com.back.domain.concert.dto;
 
+import com.back.domain.schedule.entity.ScheduleSeat;
 import com.back.domain.schedule.entity.SeatStatus;
 
 import java.util.List;
@@ -16,7 +17,7 @@ public record SeatSelectionResponse(
             Long scheduleId,
             Map<String, Integer> prices,
             List<SeatDetailResponse> seats
-    ) {
+    ){
         return new SeatSelectionResponse(
                 concertId,
                 scheduleId,
@@ -28,5 +29,13 @@ public record SeatSelectionResponse(
             String seatNumber,
             SeatStatus seatStatus,
             String gradeName
-    ) {}
+    ) {
+        public static SeatDetailResponse from(ScheduleSeat scheduleSeat){
+            return new SeatDetailResponse(
+                    scheduleSeat.getSeatNumber(),
+                    scheduleSeat.getSeatStatus(),
+                    scheduleSeat.getGradeName()
+            );
+        }
+    }
 }
