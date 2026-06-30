@@ -20,7 +20,6 @@ import java.util.List;
 public class ConcertController {
     private final ConcertService concertService;
 
-    // 콘서트 목록 조회
     @GetMapping
     public RsData<List<ConcertListResponse>> getConcerts(
             @RequestParam(required = false) String keyword,
@@ -30,7 +29,6 @@ public class ConcertController {
         return new RsData<>("200-1", "콘서트 목록 조회 성공", data);
     }
 
-    // 콘서트 상세 조회
     @GetMapping("/{concertId}")
     public RsData<ConcertDetailResponse> getConcertDetail(
             @PathVariable Long concertId) {
@@ -39,7 +37,6 @@ public class ConcertController {
         return new RsData<>("200-1", "콘서트 상세 정보 조회 성공", data);
     }
 
-    // 좌석 선택 조회 (기존)
     @GetMapping("/{concertId}/schedules/{scheduleId}/seats")
     public RsData<SeatSelectionResponse> getSeatSelection(
             @PathVariable Long concertId,

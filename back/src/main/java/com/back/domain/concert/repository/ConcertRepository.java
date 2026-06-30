@@ -9,7 +9,6 @@ import java.util.List;
 
 public interface ConcertRepository extends JpaRepository<Concert, Long> {
 
-    // keyword 검색 (없으면 전체)
     @Query("SELECT c FROM Concert c WHERE (:keyword IS NULL OR c.concertName LIKE %:keyword%)")
     List<Concert> findByKeyword(@Param("keyword") String keyword);
 }
