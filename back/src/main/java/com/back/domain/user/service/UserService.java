@@ -56,11 +56,8 @@ public class UserService {
                 .orElseThrow(() -> new ServiceException(ErrorCode.USER_NOT_FOUND));
     }
 
-    public MyPageResponse getMyPage(Long pathUserId, Long tokenUserId) {
-        if (!pathUserId.equals(tokenUserId)) {
-            throw new ServiceException(ErrorCode.USER_ACCESS_DENIED);
-        }
-        User user = userRepository.findByUserIdAndDeletedAtIsNull(pathUserId)
+    public MyPageResponse getMyPage(Long userId) {
+        User user = userRepository.findByUserIdAndDeletedAtIsNull(userId)
                 .orElseThrow(() -> new ServiceException(ErrorCode.USER_NOT_FOUND));
 
         List<TicketInfo> ticketList = ticketRepository.findAllByUserWithConcert(user)
