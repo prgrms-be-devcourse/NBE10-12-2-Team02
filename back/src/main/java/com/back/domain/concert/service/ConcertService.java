@@ -33,11 +33,9 @@ public class ConcertService {
     private final ConcertRepository concertRepository;
     private final ConcertDeatilRepository concertDeatilRepository;
 
-    // 콘서트 목록 조회
     public List<ConcertListResponse> getConcerts(String keyword, String sort) {
         List<Concert> concerts = concertRepository.findByKeyword(keyword);
 
-        // 정렬
         Comparator<Concert> comparator;
         if ("latest".equals(sort)) {
             comparator = Comparator.comparing(Concert::getStartDate).reversed();
@@ -58,7 +56,6 @@ public class ConcertService {
                 .collect(Collectors.toList());
     }
 
-    // 콘서트 상세 조회
     public ConcertDetailResponse getConcertDetail(Long concertId) {
         Concert concert = concertRepository.findById(concertId)
                 .orElseThrow(() -> new ServiceException(ErrorCode.CONCERT_NOT_FOUND));
@@ -74,7 +71,6 @@ public class ConcertService {
                 .map(ConcertDetail::getUrlDetail)
                 .collect(Collectors.toList());
 
-        // 가격 정보: 첫 번째 회차의 좌석 등급별 가격
         Map<String, Integer> prices = scheduleSeatRepository
                 .findByScheduleScheduleId(schedule.getScheduleId())
                 .stream()
@@ -93,7 +89,6 @@ public class ConcertService {
         );
     }
 
-    // 좌석 선택 조회 (기존)
     public SeatSelectionResponse getSeatSelection(Long concertId, Long scheduleId) {
         if (!concertRepository.existsById(concertId)) {
             throw new ServiceException(ErrorCode.CONCERT_NOT_FOUND);
