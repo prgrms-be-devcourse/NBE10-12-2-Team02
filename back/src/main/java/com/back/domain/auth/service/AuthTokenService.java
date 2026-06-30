@@ -157,7 +157,7 @@ public class AuthTokenService {
 
         if (parsedPayload == null) return null;
 
-        int id = (int) parsedPayload.get("id");
+        Long id = ((Number) parsedPayload.get("id")).longValue();
         String name = (String) parsedPayload.get("name");
 
         return Map.of("id", id, "name", name);
