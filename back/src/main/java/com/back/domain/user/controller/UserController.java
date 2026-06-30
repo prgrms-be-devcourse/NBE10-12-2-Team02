@@ -29,16 +29,12 @@ public class UserController {
     public RsData<Void> withdraw(
             @PathVariable Long id,
             @RequestHeader("X-Impersonate-User-Id") Long userId) {
-        // TODO: JWT 도입 시 토큰에서 userId 추출하여 본인 검증으로 교체
         userService.withdraw(id, userId);
         return new RsData<>("200-1", "회원 탈퇴가 정상적으로 완료되었습니다.", null);
     }
 
-    @GetMapping("/me/{id}")
-    public RsData<MyPageResponse> getMyPage(
-            @PathVariable Long id,
-            @RequestHeader("X-Impersonate-User-Id") Long userId) {
-        // TODO: JWT 도입 시 토큰에서 userId 추출하여 본인 검증으로 교체
-        return new RsData<>("200-1", "마이페이지 조회 성공", userService.getMyPage(id, userId));
+    @GetMapping("/me/{userId}")
+    public RsData<MyPageResponse> getMyPage(@PathVariable Long userId) {
+        return new RsData<>("200-1", "마이페이지 조회 성공", userService.getMyPage(userId));
     }
 }
