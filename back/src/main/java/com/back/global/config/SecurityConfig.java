@@ -5,7 +5,6 @@ import com.back.global.rsData.RsData;
 import com.back.global.security.CustomAuthenticationFilter;
 import com.back.standard.util.Ut;
 import lombok.RequiredArgsConstructor;
-import org.springframework.boot.security.autoconfigure.web.servlet.PathRequest;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -30,7 +29,7 @@ public class SecurityConfig {
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .authorizeHttpRequests(
                         auth -> auth
-                                .requestMatchers(PathRequest.toH2Console()).permitAll()
+                                .requestMatchers("/h2-console/**").permitAll()
                                 .requestMatchers(
                                         HttpMethod.GET,
                                         "/api/*/concerts",

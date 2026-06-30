@@ -5,6 +5,7 @@ import com.back.domain.concert.enums.ConcertSortType;
 import com.back.domain.concert.service.ConcertService;
 import com.back.domain.concert.service.SeatOccupyFacade;
 import com.back.global.annotation.ApiV1;
+import com.back.global.rq.Rq;
 import com.back.global.rsData.RsData;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -21,6 +22,7 @@ import java.util.List;
 public class ConcertController {
     private final ConcertService concertService;
     private final SeatOccupyFacade seatOccupyFacade;
+    private final Rq rq;
 
     @GetMapping
     public RsData<List<ConcertListResponse>> getConcerts(
@@ -59,8 +61,9 @@ public class ConcertController {
     public RsData<SeatOccupyResponse> seatOccupy(
             @PathVariable Long concertId,
             @PathVariable Long scheduleId,
-            @RequestBody SeatOccupyRequest request,
-            @RequestHeader("X-User-Id") Long userId) {
+            @RequestBody SeatOccupyRequest request) {
+
+        Long userId = rq.getActor().getUserId();
 
         SeatOccupyResponse response = seatOccupyFacade.seatOccupy(
                 concertId,
