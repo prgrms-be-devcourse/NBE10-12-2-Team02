@@ -27,6 +27,7 @@ public enum ErrorCode {
 
     // Concert
     CONCERT_NOT_FOUND("404-3", "존재하지 않는 콘서트입니다."),
+    CONCERT_CLOSED("400-4", "이미 종료된 콘서트는 예매할 수 없습니다."),
 
     // Schedule
     CONCERT_SCHEDULE_EMPTY("404-4", "등록된 회차가 없습니다."),
