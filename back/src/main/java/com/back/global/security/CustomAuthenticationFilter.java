@@ -49,17 +49,6 @@ public class CustomAuthenticationFilter extends OncePerRequestFilter {
     }
 
     private void work(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
-        // API 요청이 아니라면 패스
-        if (!request.getRequestURI().startsWith("/api/")) {
-            filterChain.doFilter(request, response);
-            return;
-        }
-
-        // 인증, 인가가 필요없는 API 요청이라면 패스
-        if (List.of("/api/v1/auth/login", "/api/v1/auth/logout", "/api/v1/users/signin").contains(request.getRequestURI())) {
-            filterChain.doFilter(request, response);
-            return;
-        }
 
         String refreshToken = rq.getCookieValue("refreshToken", "");
         String authorization = rq.getHeader("Authorization", "");
