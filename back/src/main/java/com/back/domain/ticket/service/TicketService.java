@@ -14,6 +14,7 @@ import com.back.domain.user.repository.UserRepository;
 import com.back.global.exception.ErrorCode;
 import com.back.global.exception.ServiceException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -27,11 +28,23 @@ public class TicketService {
     private final UserRepository userRepository;
     private final ScheduleRepository scheduleRepository;
     private final ScheduleSeatRepository scheduleSeatRepository;
+    private final RedisTemplate<String, String> redisTemplate;
 
     @Transactional
     public PaymentTicketResponse createTicket(Long userId, PaymentTicketRequest request) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ServiceException(ErrorCode.USER_NOT_FOUND));
+
+        String redisKey = String.format("seat:occupy:%d:%d:%s", request.concertId(), request.scheduleId(), request.seatNumber());
+        Object holdUserId = redisTemplate.opsForHash().get(redisKey, "userId");
+
+        if (holdUserId == null) {
+            throw new ServiceException(ErrorCode.SEAT_HOLD_EXPIRED);
+        }
+
+        if (!userId.toString().equals(holdUserId.toString())) {
+            throw new ServiceException(ErrorCode.SEAT_HELD_BY_OTHER_USER);
+        }
 
         Schedule schedule = scheduleRepository
                 .findByScheduleIdAndConcert_ConcertId(request.scheduleId(), request.concertId())
@@ -46,6 +59,7 @@ public class TicketService {
         }
 
         scheduleSeat.updateSeatStatus(SeatStatus.SOLD_OUT);
+        redisTemplate.delete(redisKey);
 
         Ticket ticket = Ticket.create(
                 user,
