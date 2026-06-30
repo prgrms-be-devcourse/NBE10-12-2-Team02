@@ -60,7 +60,6 @@ public class ConcertService {
     public List<ConcertListResponse> getConcerts(String keyword, ConcertSortType sort) {
         List<Concert> concerts = concertRepository.findByKeyword(keyword);
 
-        // 콘서트 ID들을 모아서 schedule+venue를 한 번에 조회 (N+1 방지)
         List<Long> concertIds = concerts.stream()
                 .map(Concert::getConcertId)
                 .toList();
