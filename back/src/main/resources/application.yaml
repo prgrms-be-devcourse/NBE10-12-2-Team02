@@ -28,7 +28,7 @@ custom:
   jwt:
     accessToken:
       secret: SQ0LZKvPK5vjnZYUztpFTdIVWp6g9V3ShUwJJDhq+CxoWUtr/mmzfrdIUapuZyOBTTw0tLLt/Sr5SwS2ZZmeAw
-      expirationSeconds: "#{5}"
+      expirationSeconds: "#{60*10}"
     refreshToken:
       secret: GwV6FENutXhukvlvPMYU0OrYjDhCCeLRAj1mOJ9xA+qsy2HzB6fBIau8NK4Y853lzxi0JuGos6f4IyJ73bg5zw
       expirationSeconds: "#{60*60*24*7}"

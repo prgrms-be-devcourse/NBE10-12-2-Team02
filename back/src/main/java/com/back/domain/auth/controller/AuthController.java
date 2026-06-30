@@ -33,8 +33,7 @@ public class AuthController {
     @PostMapping("/login")
     @Operation(summary = "로그인", description = "로그인 API")
     public RsData<LoginResponse> login(@RequestBody @Valid LoginRequest request) {
-        User user = userService.findById(request.id())
-                .orElseThrow(() -> new ServiceException(ErrorCode.AUTH_ID_NOT_FOUND));
+        User user = userService.findByLoginId(request.id());
 
         authTokenService.checkPassword(
                 user,
