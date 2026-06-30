@@ -20,7 +20,6 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
-import java.util.List;
 import java.util.Map;
 
 @Component
@@ -50,63 +49,27 @@ public class CustomAuthenticationFilter extends OncePerRequestFilter {
 
     private void work(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
 
-        String refreshToken = rq.getCookieValue("refreshToken", "");
         String authorization = rq.getHeader("Authorization", "");
 
-        boolean isRefreshTokenExists = !refreshToken.isBlank();
-        boolean isAuthorizationExists = !authorization.isBlank();
-
-        if (!isRefreshTokenExists && !isAuthorizationExists) {
+        if (authorization.isBlank()) {
             filterChain.doFilter(request, response);
             return;
         }
 
-        if (isAuthorizationExists && !authorization.startsWith("Bearer "))
-            throw new ServiceException(ErrorCode.AUTH_INVALID_BEARER_HEADER);
+        String accessToken = getAccessToken(authorization);
 
-        String accessToken = "";
-        if (isAuthorizationExists) {
-            String[] accessTokenBits = authorization.split(" ", 2);
-            accessToken = accessTokenBits.length == 2 ? accessTokenBits[1] : "";
-        }
+        Map<String, Object> payload = authTokenService.payload(accessToken);
 
-        boolean isAccessTokenExists = !accessToken.isBlank();
-
-        User user = null;
-
-        if (isAccessTokenExists) {
-            Map<String, Object> payload = authTokenService.payload(accessToken);
-
-            if (payload != null) {
-                Number idNumber = (Number) payload.get("id");
-                Long id = idNumber.longValue();
-                String name = (String) payload.get("name");
-
-                user = User.create(id, name);
-            }
-        }
-
-        boolean isMemberLoadedFromRefreshToken = false;
-
-        if (user == null && isRefreshTokenExists) {
-            user = authTokenService.findUser(refreshToken);
-            isMemberLoadedFromRefreshToken = user != null;
-        }
-
-        if (user == null) {
+        if (payload == null) {
             filterChain.doFilter(request, response);
             return;
         }
 
-        if (isMemberLoadedFromRefreshToken) {
-            AuthTokenService.TokenResponse tokenResponse = authTokenService.refresh(refreshToken);
+        Number idNumber = (Number) payload.get("id");
+        Long id = idNumber.longValue();
+        String name = (String) payload.get("name");
 
-            String actorAccessToken = tokenResponse.accessToken();
-            String actorRefreshToken = tokenResponse.refreshToken();
-
-            rq.setHeader("Authorization", actorAccessToken);
-            rq.setCookie("refreshToken", actorRefreshToken);
-        }
+        User user = User.create(id, name);
 
         UserDetails securityUser = new SecurityUser(
                 user.getUserId(),
@@ -125,4 +88,21 @@ public class CustomAuthenticationFilter extends OncePerRequestFilter {
 
         filterChain.doFilter(request, response);
     }
+
+    private String getAccessToken(String authorization) {
+        if (!authorization.startsWith("Bearer ")) {
+            throw new ServiceException(ErrorCode.AUTH_INVALID_BEARER_HEADER);
+        }
+
+        String[] accessTokenBits = authorization.split(" ", 2);
+        String accessToken = accessTokenBits.length == 2 ? accessTokenBits[1] : "";
+
+        if (accessToken.isBlank()) {
+            throw new ServiceException(ErrorCode.AUTH_INVALID_BEARER_HEADER);
+        }
+
+        return accessToken;
+    }
+
+
 }

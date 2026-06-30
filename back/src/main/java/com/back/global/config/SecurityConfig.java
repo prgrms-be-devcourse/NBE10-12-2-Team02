@@ -40,6 +40,7 @@ public class SecurityConfig {
                                         HttpMethod.POST,
                                         "/api/*/auth/login",
                                         "/api/*/auth/logout",
+                                        "/api/*/auth/refresh",
                                         "/api/*/users/signin"
                                 ).permitAll()
                                 .requestMatchers("/api/*/**").authenticated()

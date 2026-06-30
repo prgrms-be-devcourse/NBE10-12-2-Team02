@@ -5,6 +5,8 @@ import com.back.domain.auth.dto.LoginResponse;
 import com.back.domain.auth.service.AuthTokenService;
 import com.back.domain.user.entity.User;
 import com.back.global.annotation.ApiV1;
+import com.back.global.exception.ErrorCode;
+import com.back.global.exception.ServiceException;
 import com.back.global.rq.Rq;
 import com.back.global.rsData.RsData;
 import io.swagger.v3.oas.annotations.Operation;
@@ -63,6 +65,26 @@ public class AuthController {
         return new RsData<>(
                 "200-1",
                 "로그아웃이 완료되었습니다. 토큰 및 세션 정보가 무효화되었습니다."
+        );
+    }
+
+    @PostMapping("/refresh")
+    @Operation(summary = "토큰 재발급", description = "토큰 재발급 API")
+    public RsData<AuthTokenService.TokenResponse> refresh() {
+        String refreshToken = rq.getCookieValue("refreshToken", "");
+
+        if (refreshToken.isBlank()) {
+            throw new ServiceException(ErrorCode.AUTH_LOGIN_REQUIRED);
+        }
+
+        AuthTokenService.TokenResponse tokenResponse = authTokenService.refresh(refreshToken);
+
+        rq.setCookie("refreshToken", tokenResponse.refreshToken());
+        rq.setHeader("Authorization", tokenResponse.accessToken());
+
+        return new RsData<>(
+                "200-1",
+                "Access Token이 정상적으로 재발급되었습니다."
         );
     }
 }
