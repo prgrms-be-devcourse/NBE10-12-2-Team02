@@ -1,6 +1,5 @@
 package com.back.global.security;
 
-import com.back.domain.auth.service.AuthTokenService;
 import com.back.domain.user.entity.User;
 import com.back.global.exception.ErrorCode;
 import com.back.global.exception.ServiceException;
@@ -12,6 +11,7 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -25,7 +25,8 @@ import java.util.Map;
 @Component
 @RequiredArgsConstructor
 public class CustomAuthenticationFilter extends OncePerRequestFilter {
-    private final AuthTokenService authTokenService;
+    @Value("${custom.jwt.accessToken.secret}")
+    private String accessTokenSecret;
     private final Rq rq;
 
     @Override
@@ -58,16 +59,15 @@ public class CustomAuthenticationFilter extends OncePerRequestFilter {
 
         String accessToken = getAccessToken(authorization);
 
-        Map<String, Object> payload = authTokenService.payload(accessToken);
+        Map<String, Object> parsedPayload = Ut.jwt.payload(accessTokenSecret, accessToken);
 
-        if (payload == null) {
+        if (parsedPayload == null) {
             filterChain.doFilter(request, response);
             return;
         }
 
-        Number idNumber = (Number) payload.get("id");
-        Long id = idNumber.longValue();
-        String name = (String) payload.get("name");
+        Long id = ((Number) parsedPayload.get("id")).longValue();
+        String name = (String) parsedPayload.get("name");
 
         User user = User.create(id, name);
 

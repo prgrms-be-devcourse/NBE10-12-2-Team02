@@ -2,7 +2,9 @@ package com.back.domain.auth.controller;
 
 import com.back.domain.auth.dto.LoginRequest;
 import com.back.domain.auth.dto.LoginResponse;
-import com.back.domain.auth.service.AuthTokenService;
+import com.back.domain.auth.dto.TokenResponse;
+import com.back.domain.auth.service.AuthCredentialService;
+import com.back.domain.auth.service.AuthService;
 import com.back.domain.user.entity.User;
 import com.back.global.annotation.ApiV1;
 import com.back.global.exception.ErrorCode;
@@ -22,8 +24,9 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 @Tag(name = "Auth", description = "Auth API")
 public class AuthController {
-    private final AuthTokenService authTokenService;
     private final Rq rq;
+    private final AuthCredentialService authCredentialService;
+    private final AuthService authService;
 
     @Value("${custom.jwt.accessToken.expirationSeconds}")
     private Number accessTokenExpirationSeconds;
@@ -31,14 +34,14 @@ public class AuthController {
     @PostMapping("/login")
     @Operation(summary = "로그인", description = "로그인 API")
     public RsData<LoginResponse> login(@RequestBody @Valid LoginRequest request) {
-        User user = authTokenService.findByLoginId(request.id());
+        User user = authCredentialService.findByLoginId(request.id());
 
-        authTokenService.checkPassword(
+        authCredentialService.checkPassword(
                 user,
                 request.password()
         );
 
-        AuthTokenService.TokenResponse tokenResponse = authTokenService.login(user);
+        TokenResponse tokenResponse = authService.login(user);
 
         String accessToken = tokenResponse.accessToken();
         String refreshToken = tokenResponse.refreshToken();
@@ -58,7 +61,7 @@ public class AuthController {
     public RsData<Void> logout() {
 
         String refreshToken = rq.getCookieValue("refreshToken", "");
-        authTokenService.logout(refreshToken);
+        authService.logout(refreshToken);
 
         rq.deleteCookie("refreshToken");
 
@@ -70,14 +73,14 @@ public class AuthController {
 
     @PostMapping("/refresh")
     @Operation(summary = "토큰 재발급", description = "토큰 재발급 API")
-    public RsData<AuthTokenService.TokenResponse> refresh() {
+    public RsData<TokenResponse> refresh() {
         String refreshToken = rq.getCookieValue("refreshToken", "");
 
         if (refreshToken.isBlank()) {
             throw new ServiceException(ErrorCode.AUTH_LOGIN_REQUIRED);
         }
 
-        AuthTokenService.TokenResponse tokenResponse = authTokenService.refresh(refreshToken);
+        TokenResponse tokenResponse = authService.refresh(refreshToken);
 
         rq.setCookie("refreshToken", tokenResponse.refreshToken());
         rq.setHeader("Authorization", tokenResponse.accessToken());
