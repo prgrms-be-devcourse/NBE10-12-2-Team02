@@ -46,6 +46,13 @@ public class User extends BaseEntity {
         return new User(id, email, password, name, loginType);
     }
 
+    public static User create(Long userId, String name) {
+        User user = new User();
+        user.userId = userId;
+        user.name = name;
+        return user;
+    }
+
     public void withdraw() {
         this.deletedAt = LocalDate.now();
     }
