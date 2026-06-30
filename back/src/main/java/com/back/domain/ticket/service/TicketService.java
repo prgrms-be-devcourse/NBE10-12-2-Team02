@@ -31,18 +31,18 @@ public class TicketService {
     @Transactional
     public PaymentTicketResponse createTicket(Long userId, PaymentTicketRequest request) {
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> exception(ErrorCode.USER_NOT_FOUND));
+                .orElseThrow(() -> new ServiceException(ErrorCode.USER_NOT_FOUND));
 
         Schedule schedule = scheduleRepository
                 .findByScheduleIdAndConcert_ConcertId(request.scheduleId(), request.concertId())
-                .orElseThrow(() -> exception(ErrorCode.INVALID_CONCERT_SCHEDULE));
+                .orElseThrow(() -> new ServiceException(ErrorCode.INVALID_CONCERT_SCHEDULE));
 
         ScheduleSeat scheduleSeat = scheduleSeatRepository
                 .findWithLockByScheduleIdAndSeatNumber(request.scheduleId(), request.seatNumber())
-                .orElseThrow(() -> exception(ErrorCode.SEAT_NOT_FOUND));
+                .orElseThrow(() -> new ServiceException(ErrorCode.SEAT_NOT_FOUND));
 
         if (scheduleSeat.getSeatStatus() != SeatStatus.HOLD) {
-            throw exception(ErrorCode.SEAT_SOLD_OUT);
+            throw new ServiceException(ErrorCode.SEAT_SOLD_OUT);
         }
 
         scheduleSeat.updateSeatStatus(SeatStatus.SOLD_OUT);
@@ -71,10 +71,10 @@ public class TicketService {
     @Transactional
     public void cancelTicket(Long userId, Long ticketId) {
         Ticket ticket = ticketRepository.findByTicketIdAndUser_UserId(ticketId, userId)
-                .orElseThrow(() -> exception(ErrorCode.TICKET_NOT_FOUND_FOR_USER));
+                .orElseThrow(() -> new ServiceException(ErrorCode.TICKET_NOT_FOUND_FOR_USER));
 
         if (!ticket.isValid()) {
-            throw exception(ErrorCode.TICKET_ALREADY_CANCELLED);
+            throw new ServiceException(ErrorCode.TICKET_ALREADY_CANCELLED);
         }
 
         ticket.updateIsValid(false);
