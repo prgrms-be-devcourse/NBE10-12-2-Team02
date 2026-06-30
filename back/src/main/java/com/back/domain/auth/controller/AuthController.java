@@ -4,10 +4,7 @@ import com.back.domain.auth.dto.LoginRequest;
 import com.back.domain.auth.dto.LoginResponse;
 import com.back.domain.auth.service.AuthTokenService;
 import com.back.domain.user.entity.User;
-import com.back.domain.user.service.UserService;
 import com.back.global.annotation.ApiV1;
-import com.back.global.exception.ErrorCode;
-import com.back.global.exception.ServiceException;
 import com.back.global.rq.Rq;
 import com.back.global.rsData.RsData;
 import io.swagger.v3.oas.annotations.Operation;
@@ -23,7 +20,6 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 @Tag(name = "Auth", description = "Auth API")
 public class AuthController {
-    private final UserService userService;
     private final AuthTokenService authTokenService;
     private final Rq rq;
 
@@ -33,7 +29,7 @@ public class AuthController {
     @PostMapping("/login")
     @Operation(summary = "로그인", description = "로그인 API")
     public RsData<LoginResponse> login(@RequestBody @Valid LoginRequest request) {
-        User user = userService.findByLoginId(request.id());
+        User user = authTokenService.findByLoginId(request.id());
 
         authTokenService.checkPassword(
                 user,

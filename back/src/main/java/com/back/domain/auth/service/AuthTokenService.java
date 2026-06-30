@@ -167,4 +167,9 @@ public class AuthTokenService {
         if (!passwordEncoder.matches(password, user.getPassword()))
             throw new ServiceException(ErrorCode.AUTH_PASSWORD_MISMATCH);
     }
+
+    public User findByLoginId(String id) {
+        return userRepository.findByLoginIdAndDeletedAtIsNull(id)
+                .orElseThrow(() -> new ServiceException(ErrorCode.USER_NOT_FOUND));
+    }
 }
