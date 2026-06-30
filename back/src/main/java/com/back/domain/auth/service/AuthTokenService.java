@@ -9,6 +9,7 @@ import com.back.global.security.TokenHashUtil;
 import com.back.standard.util.Ut;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.time.Duration;
@@ -32,6 +33,8 @@ public class AuthTokenService {
 
     private final RefreshTokenRepository refreshTokenRepository;
     private final UserRepository userRepository;
+
+    private final PasswordEncoder passwordEncoder;
 
     public record TokenResponse(
             String accessToken,
@@ -158,5 +161,10 @@ public class AuthTokenService {
         String name = (String) parsedPayload.get("name");
 
         return Map.of("id", id, "name", name);
+    }
+
+    public void checkPassword(User user, String password) {
+        if (!passwordEncoder.matches(password, user.getPassword()))
+            throw new ServiceException(ErrorCode.AUTH_PASSWORD_MISMATCH);
     }
 }
