@@ -15,7 +15,6 @@ import com.back.domain.schedule.entity.ScheduleSeat;
 import com.back.domain.schedule.entity.SeatStatus;
 import com.back.domain.schedule.repository.ScheduleRepository;
 import com.back.domain.schedule.repository.ScheduleSeatRepository;
-import com.back.domain.venue.entity.Venue;
 import com.back.global.exception.ErrorCode;
 import com.back.global.exception.ServiceException;
 import lombok.RequiredArgsConstructor;
@@ -90,15 +89,12 @@ public class ConcertService {
     }
 
     public ConcertDetailResponse getConcertDetail(Long concertId) {
-        Concert concert = concertRepository.findById(concertId)
-                .orElseThrow(() -> new ServiceException(ErrorCode.CONCERT_NOT_FOUND));
+        Concert concert = findConcertOrThrow(concertId);
 
         Schedule schedule = scheduleRepository.findWithVenueByConcertId(concertId)
                 .stream()
                 .findFirst()
                 .orElseThrow(() -> new ServiceException(ErrorCode.CONCERT_SCHEDULE_EMPTY));
-
-        Venue venue = schedule.getVenue();
 
         List<String> detailUrlList = concertDeatilRepository
                 .findByConcertConcertId(concertId)
@@ -106,21 +102,15 @@ public class ConcertService {
                 .map(ConcertDetail::getUrlDetail)
                 .collect(Collectors.toList());
 
-        Map<String, Integer> prices = scheduleSeatRepository
-                .findByScheduleScheduleId(schedule.getScheduleId())
-                .stream()
-                .collect(Collectors.toMap(
-                        ScheduleSeat::getGradeName,
-                        ScheduleSeat::getSeatPrice,
-                        (v1, v2) -> v1
-                ));
+        List<ScheduleSeat> scheduleSeats = scheduleSeatRepository.findByScheduleScheduleId(schedule.getScheduleId());
+        Map<String, Integer> prices = convertToPriceMap(scheduleSeats);
 
         boolean bookable = concert.getEndDate().isAfter(LocalDateTime.now());
 
         return ConcertDetailResponse.of(
                 concert,
-                venue.getVenueName(),
-                venue.getLocation(),
+                schedule.getVenue().getVenueName(),
+                schedule.getVenue().getLocation(),
                 detailUrlList,
                 prices,
                 bookable
@@ -128,24 +118,12 @@ public class ConcertService {
     }
 
     public SeatSelectionResponse getSeatSelection(Long concertId, Long scheduleId) {
-        if (!concertRepository.existsById(concertId)) {
-            throw new ServiceException(ErrorCode.CONCERT_NOT_FOUND);
-        }
-        Schedule schedule = scheduleRepository.findById(scheduleId)
-                .orElseThrow(() -> new ServiceException(ErrorCode.SCHEDULE_NOT_FOUND));
-
-        if (!schedule.getConcert().getConcertId().equals(concertId)) {
-            throw new ServiceException(ErrorCode.INVALID_CONCERT_SCHEDULE);
-        }
+        Concert concert = findConcertOrThrow(concertId);
+        Schedule schedule = findScheduleOrThrow(scheduleId);
+        validateConcertScheduleMatch(schedule, concertId);
 
         List<ScheduleSeat> scheduleSeats = scheduleSeatRepository.findByScheduleScheduleId(scheduleId);
-
-        Map<String, Integer> pricesMap = scheduleSeats.stream()
-                .collect(Collectors.toMap(
-                        ScheduleSeat::getGradeName,
-                        ScheduleSeat::getSeatPrice,
-                        (oldPrice, newPrice) -> oldPrice
-                ));
+        Map<String, Integer> pricesMap = convertToPriceMap(scheduleSeats);
 
         List<SeatDetailResponse> seatResponses = scheduleSeats.stream()
                 .map(SeatDetailResponse::from)
@@ -193,5 +171,30 @@ public class ConcertService {
                 occupyToken,
                 OCCUPY_TTL_SECONDS
         );
+    }
+
+    private Concert findConcertOrThrow(Long concertId) {
+        return concertRepository.findById(concertId)
+                .orElseThrow(() -> new ServiceException(ErrorCode.CONCERT_NOT_FOUND));
+    }
+
+    private Schedule findScheduleOrThrow(Long scheduleId) {
+        return scheduleRepository.findById(scheduleId)
+                .orElseThrow(() -> new ServiceException(ErrorCode.SCHEDULE_NOT_FOUND));
+    }
+
+    private void validateConcertScheduleMatch(Schedule schedule, Long concertId) {
+        if (!schedule.getConcert().getConcertId().equals(concertId)) {
+            throw new ServiceException(ErrorCode.INVALID_CONCERT_SCHEDULE);
+        }
+    }
+
+    private Map<String, Integer> convertToPriceMap(List<ScheduleSeat> scheduleSeats) {
+        return scheduleSeats.stream()
+                .collect(Collectors.toMap(
+                        ScheduleSeat::getGradeName,
+                        ScheduleSeat::getSeatPrice,
+                        (oldPrice, newPrice) -> oldPrice
+                ));
     }
 }
