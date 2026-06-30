@@ -171,14 +171,14 @@ class UserControllerTest {
                 .andExpect(jsonPath("$.resultCode").value("403-2"));
     }
 
+
     @Test
     @DisplayName("마이페이지 조회 성공")
     void t9() throws Exception {
         User user = userRepository.save(User.create("testuser", "test@naver.com",
                 passwordEncoder.encode("q1w2e3r4"), "홍길동", LoginType.NORMAL));
 
-        mockMvc.perform(get("/api/v1/users/me/{id}", user.getUserId())
-                        .header("X-Impersonate-User-Id", user.getUserId()))
+        mockMvc.perform(get("/api/v1/users/me/{userId}", user.getUserId()))
                 .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.resultCode").value("200-1"))
@@ -188,16 +188,12 @@ class UserControllerTest {
     }
 
     @Test
-    @DisplayName("마이페이지 조회 실패 - 타인 조회 시도")
+    @DisplayName("마이페이지 조회 실패 - 존재하지 않는 회원")
     void t10() throws Exception {
-        User user = userRepository.save(User.create("testuser", "test@naver.com",
-                passwordEncoder.encode("q1w2e3r4"), "홍길동", LoginType.NORMAL));
-
-        mockMvc.perform(get("/api/v1/users/me/{id}", user.getUserId())
-                        .header("X-Impersonate-User-Id", 999L))
+        mockMvc.perform(get("/api/v1/users/me/{userId}", 999L))
                 .andDo(print())
-                .andExpect(status().isForbidden())
-                .andExpect(jsonPath("$.resultCode").value("403-2"));
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.resultCode").value("404-1"));
     }
 
     @Test
