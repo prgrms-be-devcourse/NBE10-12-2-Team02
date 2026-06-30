@@ -57,7 +57,8 @@ public class CustomAuthenticationFilter extends OncePerRequestFilter {
         boolean isAuthorizationExists = !authorization.isBlank();
 
         if (!isRefreshTokenExists && !isAuthorizationExists) {
-            throw new ServiceException(ErrorCode.AUTH_LOGIN_REQUIRED);
+            filterChain.doFilter(request, response);
+            return;
         }
 
         if (isAuthorizationExists && !authorization.startsWith("Bearer "))
@@ -93,7 +94,8 @@ public class CustomAuthenticationFilter extends OncePerRequestFilter {
         }
 
         if (user == null) {
-            throw new ServiceException(ErrorCode.AUTH_INVALID_CREDENTIALS);
+            filterChain.doFilter(request, response);
+            return;
         }
 
         if (isMemberLoadedFromRefreshToken) {
