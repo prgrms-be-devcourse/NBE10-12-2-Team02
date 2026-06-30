@@ -13,7 +13,7 @@ public record ConcertDetailResponse(
         String location,
         List<String> detailUrlList,
         Map<String, Integer> prices,
-        boolean isValid
+        boolean bookable
 ) {
     public static ConcertDetailResponse of(
             Concert concert,
@@ -21,7 +21,7 @@ public record ConcertDetailResponse(
             String location,
             List<String> detailUrlList,
             Map<String, Integer> prices,
-            boolean isValid
+            boolean bookable
     ) {
         return new ConcertDetailResponse(
                 concert.getConcertId(),
@@ -31,7 +31,7 @@ public record ConcertDetailResponse(
                 location,
                 detailUrlList,
                 prices,
-                isValid
+                bookable
         );
     }
 }

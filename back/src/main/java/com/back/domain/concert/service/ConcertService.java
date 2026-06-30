@@ -6,6 +6,7 @@ import com.back.domain.concert.dto.SeatSelectionResponse;
 import com.back.domain.concert.dto.SeatSelectionResponse.SeatDetailResponse;
 import com.back.domain.concert.entity.Concert;
 import com.back.domain.concert.entity.ConcertDetail;
+import com.back.domain.concert.enums.ConcertSortType;
 import com.back.domain.concert.repository.ConcertDeatilRepository;
 import com.back.domain.concert.repository.ConcertRepository;
 import com.back.domain.schedule.entity.Schedule;
@@ -34,11 +35,25 @@ public class ConcertService {
     private final ConcertRepository concertRepository;
     private final ConcertDeatilRepository concertDeatilRepository;
 
-    public List<ConcertListResponse> getConcerts(String keyword, String sort) {
+    public List<ConcertListResponse> getConcerts(String keyword, ConcertSortType sort) {
         List<Concert> concerts = concertRepository.findByKeyword(keyword);
 
+        // 콘서트 ID들을 모아서 schedule+venue를 한 번에 조회 (N+1 방지)
+        List<Long> concertIds = concerts.stream()
+                .map(Concert::getConcertId)
+                .toList();
+
+        List<Schedule> schedules = scheduleRepository.findAllWithVenueByConcertIds(concertIds);
+
+        Map<Long, String> venueNameMap = schedules.stream()
+                .collect(Collectors.toMap(
+                        schedule -> schedule.getConcert().getConcertId(),
+                        schedule -> schedule.getVenue().getVenueName(),
+                        (existing, replacement) -> existing
+                ));
+
         Comparator<Concert> comparator;
-        if ("latest".equals(sort)) {
+        if (sort == ConcertSortType.latest) {
             comparator = Comparator.comparing(Concert::getStartDate).reversed();
         } else {
             comparator = Comparator.comparing(Concert::getEndDate);
@@ -47,10 +62,7 @@ public class ConcertService {
         return concerts.stream()
                 .sorted(comparator)
                 .map(concert -> {
-                    String venueName = scheduleRepository
-                            .findFirstByConcertConcertId(concert.getConcertId())
-                            .map(schedule -> schedule.getVenue().getVenueName())
-                            .orElse("");
+                    String venueName = venueNameMap.getOrDefault(concert.getConcertId(), "");
                     return ConcertListResponse.of(concert, venueName);
                 })
                 .collect(Collectors.toList());
@@ -60,7 +72,9 @@ public class ConcertService {
         Concert concert = concertRepository.findById(concertId)
                 .orElseThrow(() -> new ServiceException(ErrorCode.CONCERT_NOT_FOUND));
 
-        Schedule schedule = scheduleRepository.findFirstByConcertConcertId(concertId)
+        Schedule schedule = scheduleRepository.findWithVenueByConcertId(concertId)
+                .stream()
+                .findFirst()
                 .orElseThrow(() -> new ServiceException(ErrorCode.CONCERT_SCHEDULE_EMPTY));
 
         Venue venue = schedule.getVenue();
@@ -80,7 +94,7 @@ public class ConcertService {
                         (v1, v2) -> v1
                 ));
 
-        boolean isValid = concert.getEndDate().isAfter(LocalDateTime.now());
+        boolean bookable = concert.getEndDate().isAfter(LocalDateTime.now());
 
         return ConcertDetailResponse.of(
                 concert,
@@ -88,7 +102,7 @@ public class ConcertService {
                 venue.getLocation(),
                 detailUrlList,
                 prices,
-                isValid
+                bookable
         );
     }
 

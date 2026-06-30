@@ -3,6 +3,7 @@ package com.back.domain.concert.controller;
 import com.back.domain.concert.dto.ConcertDetailResponse;
 import com.back.domain.concert.dto.ConcertListResponse;
 import com.back.domain.concert.dto.SeatSelectionResponse;
+import com.back.domain.concert.enums.ConcertSortType;
 import com.back.domain.concert.service.ConcertService;
 import com.back.global.annotation.ApiV1;
 import com.back.global.rsData.RsData;
@@ -23,7 +24,7 @@ public class ConcertController {
     @GetMapping
     public RsData<List<ConcertListResponse>> getConcerts(
             @RequestParam(required = false) String keyword,
-            @RequestParam(defaultValue = "closingSoon") String sort) {
+            @RequestParam(defaultValue = "closingSoon") ConcertSortType sort) {
 
         List<ConcertListResponse> data = concertService.getConcerts(keyword, sort);
         return new RsData<>("200-1", "콘서트 목록 조회 성공", data);
