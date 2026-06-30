@@ -37,13 +37,18 @@ public class TicketService {
 
         String redisKey = String.format("seat:occupy:%d:%d:%s", request.concertId(), request.scheduleId(), request.seatNumber());
         Object holdUserId = redisTemplate.opsForHash().get(redisKey, "userId");
+        Object holdOccupyToken = redisTemplate.opsForHash().get(redisKey, "occupyToken");
 
-        if (holdUserId == null) {
+        if (holdUserId == null || holdOccupyToken == null) {
             throw new ServiceException(ErrorCode.SEAT_HOLD_EXPIRED);
         }
 
         if (!userId.toString().equals(holdUserId.toString())) {
             throw new ServiceException(ErrorCode.SEAT_HELD_BY_OTHER_USER);
+        }
+
+        if (!request.occupyToken().equals(holdOccupyToken.toString())) {
+            throw new ServiceException(ErrorCode.INVALID_OCCUPY_TOKEN);
         }
 
         Schedule schedule = scheduleRepository
