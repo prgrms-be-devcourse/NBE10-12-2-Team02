@@ -19,6 +19,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
@@ -79,12 +80,15 @@ public class ConcertService {
                         (v1, v2) -> v1
                 ));
 
+        boolean isValid = concert.getEndDate().isAfter(LocalDateTime.now());
+
         return ConcertDetailResponse.of(
                 concert,
                 venue.getVenueName(),
                 venue.getLocation(),
                 detailUrlList,
-                prices
+                prices,
+                isValid
         );
     }
 
