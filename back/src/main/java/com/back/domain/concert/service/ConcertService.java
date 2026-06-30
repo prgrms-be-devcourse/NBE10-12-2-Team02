@@ -109,7 +109,7 @@ public class ConcertService {
             throw new ServiceException(SEAT_HELD_BY_OTHER_USER);
         }
 
-        scheduleSeat.updateStatus(SeatStatus.HOLD);
+        scheduleSeat.updateSeatStatus(SeatStatus.HOLD);
 
         return new SeatOccupyResponse(occupyToken, OCCUPY_TTL_SECONDS, SeatStatus.HOLD);
     }

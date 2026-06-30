@@ -2,12 +2,13 @@ package com.back.domain.schedule.entity;
 
 import com.back.global.jpa.entity.BaseEntity;
 import jakarta.persistence.*;
+import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 @Entity
 @Getter
-@NoArgsConstructor
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class ScheduleSeat extends BaseEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -29,10 +30,6 @@ public class ScheduleSeat extends BaseEntity {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private SeatStatus seatStatus;
-
-    public void updateStatus(SeatStatus seatStatus) {
-        this.seatStatus = seatStatus;
-    }
 
     private ScheduleSeat(Schedule schedule, String gradeName, String seatNumber, Integer seatPrice, SeatStatus seatStatus) {
         this.schedule = schedule;
