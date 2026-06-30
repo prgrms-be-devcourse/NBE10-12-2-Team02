@@ -34,15 +34,18 @@ public class ScheduleSeat extends BaseEntity {
         this.seatStatus = seatStatus;
     }
 
-    public static ScheduleSeat create(Schedule schedule, String seatNumber, Integer seatPrice, String gradeName, SeatStatus seatStatus) {
-        ScheduleSeat seat = new ScheduleSeat();
-        seat.schedule = schedule;
-        seat.seatNumber = seatNumber;
-        seat.seatPrice = seatPrice;
-        seat.gradeName = gradeName;
-        seat.seatStatus = seatStatus;
-        return seat;
+    private ScheduleSeat(Schedule schedule, String gradeName, String seatNumber, Integer seatPrice, SeatStatus seatStatus) {
+        this.schedule = schedule;
+        this.gradeName = gradeName;
+        this.seatNumber = seatNumber;
+        this.seatPrice = seatPrice;
+        this.seatStatus = seatStatus;
     }
+
+    public static ScheduleSeat create(Schedule schedule, String gradeName, String seatNumber, Integer seatPrice, SeatStatus seatStatus) {
+        return new ScheduleSeat(schedule, gradeName, seatNumber, seatPrice, seatStatus);
+    }
+
     public void updateSeatStatus(SeatStatus SeatStatus) {
         this.seatStatus = SeatStatus;
     }
