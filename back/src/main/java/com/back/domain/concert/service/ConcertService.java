@@ -193,6 +193,9 @@ public class ConcertService {
 
         scheduleSeat.updateSeatStatus(SeatStatus.HOLD);
 
-        return new SeatOccupyResponse(occupyToken, OCCUPY_TTL_SECONDS, SeatStatus.HOLD);
+        return SeatOccupyResponse.of(
+                occupyToken,
+                OCCUPY_TTL_SECONDS
+        );
     }
 }
