@@ -3,7 +3,7 @@ package com.back.global.security.filter;
 import com.back.domain.user.entity.User;
 import com.back.global.exception.ErrorCode;
 import com.back.global.exception.ServiceException;
-import com.back.global.rq.Rq;
+import com.back.global.requestcontext.RequestContext;
 import com.back.global.rsData.RsData;
 import com.back.global.security.SecurityUser;
 import com.back.standard.util.Ut;
@@ -28,7 +28,7 @@ import java.util.Map;
 public class CustomAuthenticationFilter extends OncePerRequestFilter {
     @Value("${custom.jwt.accessToken.secret}")
     private String accessTokenSecret;
-    private final Rq rq;
+    private final RequestContext rq;
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {

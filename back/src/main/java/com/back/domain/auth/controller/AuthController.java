@@ -7,7 +7,7 @@ import com.back.domain.auth.service.AuthService;
 import com.back.global.annotation.ApiV1;
 import com.back.global.exception.ErrorCode;
 import com.back.global.exception.ServiceException;
-import com.back.global.rq.Rq;
+import com.back.global.requestcontext.RequestContext;
 import com.back.global.rsData.RsData;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -22,7 +22,7 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 @Tag(name = "Auth", description = "Auth API")
 public class AuthController {
-    private final Rq rq;
+    private final RequestContext rq;
     private final AuthService authService;
 
     @Value("${custom.jwt.accessToken.expirationSeconds}")

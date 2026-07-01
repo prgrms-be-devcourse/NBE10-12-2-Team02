@@ -1,4 +1,4 @@
-package com.back.global.rq;
+package com.back.global.requestcontext;
 
 import com.back.domain.user.entity.User;
 import com.back.global.security.SecurityUser;
@@ -15,7 +15,7 @@ import java.util.Optional;
 
 @Component
 @RequiredArgsConstructor
-public class Rq {
+public class RequestContext {
     private final HttpServletRequest req;
     private final HttpServletResponse resp;
 
