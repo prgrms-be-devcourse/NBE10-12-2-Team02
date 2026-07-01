@@ -75,6 +75,7 @@ public class AuthService {
         String requestRefreshTokenHash = TokenHashUtil.sha256(refreshToken);
 
         if (!savedRefreshTokenHash.equals(requestRefreshTokenHash)) {
+            refreshTokenRepository.deleteAllByUserId(payload.userId());
             throw new ServiceException(ErrorCode.AUTH_REFRESH_TOKEN_MISMATCH);
         }
 

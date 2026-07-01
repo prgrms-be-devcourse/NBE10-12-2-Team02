@@ -5,6 +5,7 @@ import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Repository;
 
 import java.time.Duration;
+import java.util.Set;
 
 @Repository
 @RequiredArgsConstructor
@@ -33,6 +34,16 @@ public class RefreshTokenRepository {
         String key = getKey(userId, jti);
 
         redisTemplate.delete(key);
+    }
+
+    public void deleteAllByUserId(Long userId) {
+        Set<String> keys = redisTemplate.keys(PREFIX + userId + ":*");
+
+        if (keys == null || keys.isEmpty()) {
+            return;
+        }
+
+        redisTemplate.delete(keys);
     }
 
     private String getKey(Long userId, String jti) {
