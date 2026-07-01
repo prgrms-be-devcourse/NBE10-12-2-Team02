@@ -34,10 +34,14 @@ public class JwtTokenProvider {
             return null;
         }
 
-        Long userId = Long.valueOf(payload.get("id").toString());
-        String jti = payload.get("jti").toString();
+        try {
+            Long userId = getLongClaim(payload, "id");
+            String jti = getStringClaim(payload, "jti");
 
-        return new RefreshTokenPayload(userId, jti);
+            return new RefreshTokenPayload(userId, jti);
+        } catch (RuntimeException e) {
+            return null;
+        }
     }
 
     public AccessTokenPayload parseAccessToken(String accessToken) {
@@ -47,10 +51,42 @@ public class JwtTokenProvider {
             throw new ServiceException(ErrorCode.AUTH_INVALID_CREDENTIALS);
         }
 
-        Long userId = Long.valueOf(payload.get("id").toString());
-        String name = payload.get("name").toString();
+        try {
+            Long userId = getLongClaim(payload, "id");
+            String name = getStringClaim(payload, "name");
 
-        return new AccessTokenPayload(userId, name);
+            return new AccessTokenPayload(userId, name);
+        } catch (RuntimeException e) {
+            throw new ServiceException(ErrorCode.AUTH_INVALID_CREDENTIALS);
+        }
+    }
+
+    private Long getLongClaim(Map<String, Object> payload, String key) {
+        Object value = payload.get(key);
+
+        if (value == null) {
+            throw new ServiceException(ErrorCode.AUTH_INVALID_CREDENTIALS);
+        }
+
+        if (value instanceof Number number) {
+            return number.longValue();
+        }
+
+        try {
+            return Long.valueOf(value.toString());
+        } catch (NumberFormatException e) {
+            throw new ServiceException(ErrorCode.AUTH_INVALID_CREDENTIALS);
+        }
+    }
+
+    private String getStringClaim(Map<String, Object> payload, String key) {
+        Object value = payload.get(key);
+
+        if (value == null || value.toString().isBlank()) {
+            throw new IllegalArgumentException("Missing claim: " + key);
+        }
+
+        return value.toString();
     }
 
     public String createAccessToken(User user) {
