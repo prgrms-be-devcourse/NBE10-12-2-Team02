@@ -23,7 +23,6 @@ public class ScheduleFixture {
         return LocalDateTime.parse(value, FMT);
     }
 
-    // concerts, venues는 saveAll로 저장된 순서 (index 0 = 1번째)
     public List<Schedule> createSchedules(List<Concert> concerts, List<Venue> venues) {
         List<Schedule> s = new ArrayList<>();
 
