@@ -9,7 +9,6 @@ import java.util.List;
 
 public class SeatGenerator {
 
-    // 등급 정의: 등급명, 가격, 행 문자
     private record SeatGrade(String gradeName, int price, String rowLabel) {}
 
     private static final List<SeatGrade> GRADES = List.of(
@@ -21,7 +20,6 @@ public class SeatGenerator {
 
     private static final int SEATS_PER_ROW = 10;
 
-    // 한 회차(schedule)에 대한 좌석 목록 생성
     public static List<ScheduleSeat> generate(Schedule schedule) {
         List<ScheduleSeat> seats = new ArrayList<>();
         for (SeatGrade grade : GRADES) {
