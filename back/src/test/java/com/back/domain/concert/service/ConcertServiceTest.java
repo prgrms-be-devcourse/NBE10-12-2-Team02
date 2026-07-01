@@ -102,7 +102,7 @@ class ConcertServiceTest {
             final long userId = i + 1;
             executorService.execute(() -> {
                 try {
-                    startLatch.await(); // 대기
+                    startLatch.await();
 
                     seatOccupyManager.seatOccupy(
                             concert.getConcertId(),
