@@ -17,6 +17,7 @@ import com.back.domain.schedule.repository.ScheduleSeatRepository;
 import com.back.global.exception.ErrorCode;
 import com.back.global.exception.ServiceException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -34,6 +35,7 @@ public class ConcertService {
     private final ScheduleRepository scheduleRepository;
     private final ConcertRepository concertRepository;
     private final ConcertDeatilRepository concertDeatilRepository;
+    private final RedisTemplate<Object, Object> redisTemplate;
 
     public List<ConcertListResponse> getConcerts(String keyword, ConcertSortType sort) {
         List<Concert> concerts = concertRepository.findByKeyword(keyword);
@@ -122,9 +124,6 @@ public class ConcertService {
 
         if (scheduleSeat.getSeatStatus() == SeatStatus.SOLD_OUT) {
             throw new ServiceException(ErrorCode.SEAT_ALREADY_SOLD);
-        }
-        if (scheduleSeat.getSeatStatus() == SeatStatus.HOLD) {
-            throw new ServiceException(ErrorCode.SEAT_ALREADY_HOLD);
         }
 
         scheduleSeat.updateSeatStatus(SeatStatus.HOLD);
