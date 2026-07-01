@@ -3,9 +3,7 @@ package com.back.domain.auth.controller;
 import com.back.domain.auth.dto.LoginRequest;
 import com.back.domain.auth.dto.LoginResponse;
 import com.back.domain.auth.dto.TokenResponse;
-import com.back.domain.auth.service.AuthCredentialService;
 import com.back.domain.auth.service.AuthService;
-import com.back.domain.user.entity.User;
 import com.back.global.annotation.ApiV1;
 import com.back.global.exception.ErrorCode;
 import com.back.global.exception.ServiceException;
@@ -34,14 +32,7 @@ public class AuthController {
     @PostMapping("/login")
     @Operation(summary = "로그인", description = "로그인 API")
     public RsData<LoginResponse> login(@RequestBody @Valid LoginRequest request) {
-        User user = authCredentialService.findByLoginId(request.id());
-
-        authCredentialService.checkPassword(
-                user,
-                request.password()
-        );
-
-        TokenResponse tokenResponse = authService.login(user);
+        TokenResponse tokenResponse = authService.login(request.id(), request.password());
 
         String accessToken = tokenResponse.accessToken();
         String refreshToken = tokenResponse.refreshToken();

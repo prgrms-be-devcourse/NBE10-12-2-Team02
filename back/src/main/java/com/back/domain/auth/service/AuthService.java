@@ -11,6 +11,7 @@ import com.back.global.security.RefreshTokenRepository;
 import com.back.global.security.TokenHashUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.time.Duration;
@@ -22,14 +23,18 @@ public class AuthService {
     private final RefreshTokenRepository refreshTokenRepository;
     private final UserRepository userRepository;
     private final JwtTokenProvider jwtTokenProvider;
-
-    @Value("${custom.jwt.refreshToken.secret}")
-    private String refreshTokenSecret;
+    private final PasswordEncoder passwordEncoder;
 
     @Value("${custom.jwt.refreshToken.expirationSeconds}")
     private int refreshTokenExpireSeconds;
 
-    public TokenResponse login(User user) {
+    public TokenResponse login(String id, String password) {
+        User user = userRepository.findByLoginIdAndDeletedAtIsNull(id)
+                .orElseThrow(() -> new ServiceException(ErrorCode.USER_NOT_FOUND));
+
+        if (!passwordEncoder.matches(password, user.getPassword()))
+            throw new ServiceException(ErrorCode.AUTH_PASSWORD_MISMATCH);
+
         String accessToken = jwtTokenProvider.createAccessToken(user);
 
         String refreshTokenJti = UUID.randomUUID().toString();
