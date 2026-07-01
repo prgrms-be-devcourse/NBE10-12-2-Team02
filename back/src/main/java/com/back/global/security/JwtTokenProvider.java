@@ -1,6 +1,9 @@
 package com.back.global.security;
 
+import com.back.domain.auth.service.AuthService;
 import com.back.domain.user.entity.User;
+import com.back.global.exception.ErrorCode;
+import com.back.global.exception.ServiceException;
 import com.back.standard.util.Ut;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -22,6 +25,19 @@ public class JwtTokenProvider {
 
     @Value("${custom.jwt.refreshToken.expirationSeconds}")
     private int refreshTokenExpireSeconds;
+
+    public RefreshTokenPayload parseRefreshToken(String refreshToken) {
+        Map<String, Object> payload = Ut.jwt.payload(refreshTokenSecret, refreshToken);
+
+        if (payload == null) {
+            throw new ServiceException(ErrorCode.AUTH_INVALID_REFRESH_TOKEN);
+        }
+
+        Long userId = Long.valueOf(payload.get("id").toString());
+        String jti = payload.get("jti").toString();
+
+        return new RefreshTokenPayload(userId, jti);
+    }
 
     public String createAccessToken(User user) {
         return Ut.jwt.toString(

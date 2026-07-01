@@ -6,15 +6,14 @@ import com.back.domain.user.repository.UserRepository;
 import com.back.global.exception.ErrorCode;
 import com.back.global.exception.ServiceException;
 import com.back.global.security.JwtTokenProvider;
+import com.back.global.security.RefreshTokenPayload;
 import com.back.global.security.RefreshTokenRepository;
 import com.back.global.security.TokenHashUtil;
-import com.back.standard.util.Ut;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.time.Duration;
-import java.util.Map;
 import java.util.UUID;
 
 @Service
@@ -29,24 +28,6 @@ public class AuthService {
 
     @Value("${custom.jwt.refreshToken.expirationSeconds}")
     private int refreshTokenExpireSeconds;
-
-    private record RefreshTokenPayload(
-            Long userId,
-            String jti
-    ) {
-    }
-    private RefreshTokenPayload parseRefreshToken(String refreshToken) {
-        Map<String, Object> payload = Ut.jwt.payload(refreshTokenSecret, refreshToken);
-
-        if (payload == null) {
-            throw new ServiceException(ErrorCode.AUTH_INVALID_REFRESH_TOKEN);
-        }
-
-        Long userId = Long.valueOf(payload.get("id").toString());
-        String jti = payload.get("jti").toString();
-
-        return new RefreshTokenPayload(userId, jti);
-    }
 
     public TokenResponse login(User user) {
         String accessToken = jwtTokenProvider.createAccessToken(user);
@@ -67,13 +48,13 @@ public class AuthService {
     }
 
     public void logout(String refreshToken) {
-        RefreshTokenPayload payload = parseRefreshToken(refreshToken);
+        RefreshTokenPayload payload = jwtTokenProvider.parseRefreshToken(refreshToken);
 
         refreshTokenRepository.delete(payload.userId(), payload.jti());
     }
 
     public TokenResponse refresh(String refreshToken) {
-        RefreshTokenPayload payload = parseRefreshToken(refreshToken);
+        RefreshTokenPayload payload = jwtTokenProvider.parseRefreshToken(refreshToken);
 
         String savedRefreshTokenHash = refreshTokenRepository.find(payload.userId(), payload.jti());
 
