@@ -126,6 +126,6 @@ class ConcertServiceTest {
 
         // DB 상태 확인
         ScheduleSeat updatedSeat = scheduleSeatRepository.findById(seat.getConcertSeatPriceId()).orElseThrow();
-        assertThat(updatedSeat.getSeatStatus()).isEqualTo(SeatStatus.HOLD);
+        assertThat(updatedSeat.getSeatStatus()).isEqualTo(SeatStatus.AVAILABLE);
     }
 }

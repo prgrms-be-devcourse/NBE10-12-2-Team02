@@ -77,25 +77,26 @@ public class SeatOccupyManager {
             }
             return null;
         });
+
         Map<String, Integer> pricesMap = concertService.convertToPriceMap(seats);
 
         List<SeatSelectionResponse.SeatDetailResponse> seatResponses = IntStream.range(0, seats.size())
                 .mapToObj(i -> {
                     ScheduleSeat seat = seats.get(i);
-                    boolean isHold = seat.getSeatStatus() == SeatStatus.AVAILABLE && isHold(existsResults.get(i));
+                    SeatStatus status = seat.getSeatStatus();
+                    Object res = existsResults.get(i);
+                    boolean isHold = status == SeatStatus.AVAILABLE &&
+                            (Boolean.TRUE.equals(res) || (res instanceof Number n && n.longValue() > 0));
 
                     return new SeatSelectionResponse.SeatDetailResponse(
                             seat.getSeatNumber(),
-                            isHold ? SeatStatus.HOLD : seat.getSeatStatus(),
+                            isHold ? SeatStatus.HOLD : status,
                             seat.getGradeName()
                     );
                 })
                 .toList();
-        return SeatSelectionResponse.of(concertId, scheduleId, pricesMap, seatResponses);
-    }
 
-    private boolean isHold(Object result) {
-        return Boolean.TRUE.equals(result) || (result instanceof Number n && n.longValue() > 0);
+        return SeatSelectionResponse.of(concertId, scheduleId, pricesMap, seatResponses);
     }
 
     public static String generateKey(Long concertId, Long scheduleId, String seatNumber) {

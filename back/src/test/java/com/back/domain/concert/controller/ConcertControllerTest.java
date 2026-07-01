@@ -14,19 +14,26 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 import static com.back.domain.schedule.entity.SeatStatus.AVAILABLE;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.Mockito.when;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 
 @ActiveProfiles("test")
 @SpringBootTest
@@ -53,6 +60,9 @@ class ConcertControllerTest {
         this.scheduleRepository = scheduleRepository;
         this.scheduleSeatRepository = scheduleSeatRepository;
     }
+
+    @MockitoBean
+    private StringRedisTemplate redisTemplate;
 
     @Test
     @DisplayName("좌석 선택 페이지 조회 성공")
@@ -83,6 +93,9 @@ class ConcertControllerTest {
                 AVAILABLE
         );
         scheduleSeatRepository.save(seat2);
+
+        when(redisTemplate.executePipelined(any(org.springframework.data.redis.core.RedisCallback.class)))
+                .thenReturn(List.of(false, false));
 
         mockMvc.perform(get("/api/v1/concerts/{concertId}/schedules/{scheduleId}/seats", concert.getConcertId(), schedule.getScheduleId())
                         .with(user(new SecurityUser(1L, "테스트유저")))
@@ -155,5 +168,47 @@ class ConcertControllerTest {
                 .andExpect(jsonPath("$.data.location").value("서울"))
                 .andExpect(jsonPath("$.data.prices.VIP").value(150000))
                 .andExpect(jsonPath("$.data.bookable").value(true));
+    }
+
+    @Test
+    @DisplayName("좌석 임시 선점 성공")
+    void t4() throws Exception {
+        Concert concert = Concert.create("아이유 콘서트", "설명", LocalDateTime.now(), LocalDateTime.now().plusDays(1), "poster.jpg");
+        concertRepository.save(concert);
+
+        Venue venue = Venue.create("올림픽체조경기장", "서울", 15000L);
+        venueRepository.save(venue);
+
+        Schedule schedule = Schedule.create(concert, venue, LocalDateTime.now().plusHours(12), 1);
+        scheduleRepository.save(schedule);
+
+        ScheduleSeat seat = ScheduleSeat.create(schedule, "VIP", "A-1", 150000, AVAILABLE);
+        scheduleSeatRepository.save(seat);
+
+        when(redisTemplate.execute(
+                any(org.springframework.data.redis.core.script.RedisScript.class),
+                anyList(),
+                any(Object.class),
+                any(Object.class),
+                any(Object.class)
+        )).thenReturn(1L);
+
+        String requestBody = """
+                {
+                  "seatNumber": "A-1"
+                }
+                """;
+
+        mockMvc.perform(post("/api/v1/concerts/{concertId}/schedules/{scheduleId}/seats/occupy", concert.getConcertId(), schedule.getScheduleId())
+                        .with(user(new SecurityUser(1L, "테스트유저")))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(requestBody))
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.resultCode").value("200-1"))
+                .andExpect(jsonPath("$.msg").value("좌석 임시 선점에 성공했습니다."))
+                .andExpect(jsonPath("$.data.occupyToken").isString())
+                .andExpect(jsonPath("$.data.expireInSeconds").value(600))
+                .andExpect(jsonPath("$.data.seatStatus").value("HOLD"));
     }
 }
