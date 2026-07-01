@@ -45,7 +45,6 @@ class UserControllerTest {
         this.passwordEncoder = passwordEncoder;
     }
 
-    // ===================== 회원가입 =====================
 
     @Test
     @DisplayName("회원가입 성공")
@@ -121,7 +120,6 @@ class UserControllerTest {
                 .andExpect(status().isBadRequest());
     }
 
-    // ===================== 회원 탈퇴 =====================
 
     @Test
     @DisplayName("회원 탈퇴 성공")
@@ -175,7 +173,6 @@ class UserControllerTest {
                 .andExpect(jsonPath("$.resultCode").value("403-2"));
     }
 
-    // ===================== 마이페이지 조회 =====================
 
     @Test
     @DisplayName("마이페이지 조회 성공")
@@ -201,7 +198,6 @@ class UserControllerTest {
                 .andExpect(jsonPath("$.resultCode").value("404-1"));
     }
 
-    // ===================== 마이페이지 수정 =====================
 
     @Test
     @DisplayName("마이페이지 수정 성공 - 이름만 변경")
