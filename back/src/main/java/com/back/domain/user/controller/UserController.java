@@ -3,6 +3,7 @@ package com.back.domain.user.controller;
 import com.back.domain.user.dto.MyPageResponse;
 import com.back.domain.user.dto.SignupRequest;
 import com.back.domain.user.dto.SignupResponse;
+import com.back.domain.user.dto.UpdateMyPageRequest;
 import com.back.domain.user.service.UserService;
 import com.back.global.annotation.ApiV1;
 import com.back.global.rsData.RsData;
@@ -36,5 +37,12 @@ public class UserController {
     @GetMapping("/me/{userId}")
     public RsData<MyPageResponse> getMyPage(@PathVariable Long userId) {
         return new RsData<>("200-1", "마이페이지 조회 성공", userService.getMyPage(userId));
+    }
+    @PatchMapping("/me/{userId}")
+    public RsData<Void> updateMyPage(
+            @PathVariable Long userId,
+            @RequestBody @Valid UpdateMyPageRequest request) {
+        userService.updateMyPage(userId, request);
+        return new RsData<>("200-1", "마이페이지 수정 성공", null);
     }
 }
