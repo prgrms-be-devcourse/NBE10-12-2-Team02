@@ -70,7 +70,8 @@ public class AuthService {
 
         String savedRefreshTokenHash = refreshTokenRepository.find(payload.userId(), payload.jti());
 
-        if (savedRefreshTokenHash == null) {
+        if (savedRefreshTokenHash == null) { // 구 리프레시 토큰 재사용의 경우
+            refreshTokenRepository.deleteAllByUserId(payload.userId());
             throw new ServiceException(ErrorCode.AUTH_INVALID_REFRESH_TOKEN);
         }
 

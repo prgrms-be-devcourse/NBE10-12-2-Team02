@@ -1,10 +1,8 @@
 package com.back.global.security.filter;
 
-import com.back.global.exception.ErrorCode;
 import com.back.global.exception.ServiceException;
 import com.back.global.requestcontext.RequestContext;
 import com.back.global.rsData.RsData;
-import com.back.global.security.SecurityUser;
 import com.back.global.security.auth.SecurityAuthenticationFactory;
 import com.back.global.security.jwt.JwtTokenProvider;
 import com.back.global.security.jwt.payload.AccessTokenPayload;
@@ -14,10 +12,8 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 

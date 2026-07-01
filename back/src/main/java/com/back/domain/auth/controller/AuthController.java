@@ -57,7 +57,7 @@ public class AuthController {
 
     @PostMapping("/refresh")
     @Operation(summary = "토큰 재발급", description = "토큰 재발급 API")
-    public RsData<TokenResponse> refresh() {
+    public RsData<Void> refresh() {
         String refreshToken = rq.getCookieValue("refreshToken", "");
 
         if (refreshToken.isBlank()) {
