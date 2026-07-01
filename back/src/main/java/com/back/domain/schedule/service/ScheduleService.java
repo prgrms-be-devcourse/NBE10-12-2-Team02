@@ -1,6 +1,7 @@
 package com.back.domain.schedule.service;
 
 import com.back.domain.concert.repository.ConcertRepository;
+import com.back.domain.schedule.dto.ShowScheduleListResponse;
 import com.back.domain.schedule.dto.ShowScheduleResponse;
 import com.back.domain.schedule.entity.Schedule;
 import com.back.domain.schedule.entity.SeatStatus;
@@ -11,6 +12,8 @@ import com.back.global.exception.ServiceException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -30,6 +33,12 @@ public class ScheduleService {
                 .countBySchedule_ScheduleIdAndSeatStatus(scheduleId, SeatStatus.AVAILABLE);
 
         return ShowScheduleResponse.from(schedule, remainingSeats);
+    }
+
+    public List<ShowScheduleListResponse> showScheduleList(Long concertId) {
+        return scheduleRepository.findByConcertConcertId(concertId).stream()
+                .map(ShowScheduleListResponse::of)
+                .toList();
     }
 
 }

@@ -5,7 +5,6 @@ import Link from "next/link";
 import { Search, ChevronLeft, ChevronRight } from "lucide-react";
 import { apiFetch } from "@/lib/api";
 
-// 백엔드 ConcertListResponse 타입
 interface ConcertListItem {
   concertId: number;
   concertName: string;
@@ -21,6 +20,8 @@ export default function Home() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
+  const [topConcerts, setTopConcerts] = useState<ConcertListItem[]>([]);
+
   const [keyword, setKeyword] = useState("");
   const [sort, setSort] = useState("closingSoon");
   const [slideIndex, setSlideIndex] = useState(0);
@@ -29,7 +30,7 @@ export default function Home() {
   const visibleCount = 3;
   const itemsPerPage = 12;
 
-  // API에서 콘서트 목록 받아오기
+  // 검색/정렬에 반응하는 전체 목록
   useEffect(() => {
     const fetchConcerts = async () => {
       try {
@@ -51,7 +52,13 @@ export default function Home() {
     fetchConcerts();
   }, [keyword, sort]);
 
-  const topConcerts = [...concerts].slice(0, 5);
+  // 마감임박 슬라이드는 검색어/정렬과 무관하게 최초 1회만
+  useEffect(() => {
+    apiFetch<ConcertListItem[]>(`/concerts?sort=closingSoon`)
+      .then((res) => setTopConcerts(res.data.slice(0, 5)))
+      .catch(() => setTopConcerts([]));
+  }, []);
+
   const maxIndex = Math.max(0, topConcerts.length - visibleCount);
 
   const prevSlide = () => setSlideIndex((i) => Math.max(0, i - 1));
@@ -89,7 +96,6 @@ export default function Home() {
       </div>
 
       <div className="max-w-5xl mx-auto px-6 py-10">
-        {/* 상단 슬라이드 (마감 임박) */}
         <div className="mb-12 relative">
           <button
             onClick={prevSlide}

@@ -1,11 +1,9 @@
 "use client";
 
 import { useState, useEffect, use } from "react";
-import { useSearchParams } from "next/navigation";
-import Link from "next/link";
-import { apiFetch } from "@/lib/api";
+import { useSearchParams, useRouter } from "next/navigation";
+import { apiFetch, decodeToken } from "@/lib/api";
 
-// 백엔드 응답 타입
 interface SeatDetail {
   seatNumber: string;
   seatStatus: "AVAILABLE" | "HOLD" | "SOLD_OUT";
@@ -27,14 +25,21 @@ export default function SeatSelectPage({
   const { id } = use(params);
   const searchParams = useSearchParams();
   const scheduleId = searchParams.get("scheduleId");
+  const router = useRouter();
 
   const [seatData, setSeatData] = useState<SeatSelectionData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [selectedSeats, setSelectedSeats] = useState<string[]>([]);
+  const [isReserving, setIsReserving] = useState(false);
 
-  // 좌석 조회 함수 (최초 + 폴링 공용)
   useEffect(() => {
+    if (!decodeToken()) {
+      alert("로그인이 필요합니다.");
+      router.push("/login");
+      return;
+    }
+
     if (!scheduleId) {
       setError("회차 정보가 없습니다.");
       setLoading(false);
@@ -61,37 +66,24 @@ export default function SeatSelectPage({
       }
     };
 
-    // 최초 1회 호출
     fetchSeats();
-
-    // 3초마다 폴링 (실시간 좌석 현황)
     const intervalId = setInterval(fetchSeats, 3000);
 
-    // 페이지 떠날 때 폴링 정리
     return () => {
       active = false;
       clearInterval(intervalId);
     };
   }, [id, scheduleId]);
 
-  // 좌석 상태를 빠르게 찾기 위한 Map
-  const seatStatusMap = new Map(
-    seatData?.seats.map((s) => [s.seatNumber, s.seatStatus]) ?? []
-  );
+  const seatStatusMap = new Map(seatData?.seats.map((s) => [s.seatNumber, s.seatStatus]) ?? []);
+  const seatGradeMap = new Map(seatData?.seats.map((s) => [s.seatNumber, s.gradeName]) ?? []);
 
-  // 등급/가격을 좌석번호로 찾기 위한 Map
-  const seatGradeMap = new Map(
-    seatData?.seats.map((s) => [s.seatNumber, s.gradeName]) ?? []
-  );
-
-  // 좌석 그리드 구성 (백엔드에서 온 좌석 번호로 행/열 추출)
   const rows = Array.from(
     new Set(seatData?.seats.map((s) => s.seatNumber.split("-")[0]) ?? [])
   ).sort();
 
   const handleSeatClick = (seatNumber: string) => {
     const status = seatStatusMap.get(seatNumber);
-    // 예매 가능한 좌석만 선택 가능
     if (status !== "AVAILABLE") return;
 
     if (selectedSeats.includes(seatNumber)) {
@@ -101,12 +93,43 @@ export default function SeatSelectPage({
     }
   };
 
-  // 총 금액 계산
   const totalPrice = selectedSeats.reduce((sum, seatNumber) => {
     const grade = seatGradeMap.get(seatNumber);
     const price = grade ? seatData?.prices[grade] ?? 0 : 0;
     return sum + price;
   }, 0);
+
+  const handleProceedToPayment = async () => {
+    if (selectedSeats.length !== 1) {
+      alert("결제는 한 번에 좌석 1개만 가능합니다. (백엔드 제약)");
+      return;
+    }
+
+    const seatNumber = selectedSeats[0];
+    setIsReserving(true);
+    try {
+      const res = await apiFetch<{ occupyToken: string; expireInSeconds: number }>(
+        `/concerts/${id}/schedules/${scheduleId}/seats/occupy`,
+        { method: "POST", body: JSON.stringify({ seatNumber }) }
+      );
+
+      const grade = seatGradeMap.get(seatNumber);
+      const price = grade ? seatData?.prices[grade] ?? 0 : 0;
+
+      const params = new URLSearchParams({
+        concertId: id,
+        scheduleId: scheduleId ?? "",
+        seatNumber,
+        occupyToken: res.data.occupyToken,
+        price: String(price),
+      });
+      router.push(`/payment?${params.toString()}`);
+    } catch (e) {
+      alert(e instanceof Error ? e.message : "좌석 선점에 실패했습니다.");
+    } finally {
+      setIsReserving(false);
+    }
+  };
 
   if (loading) {
     return (
@@ -124,15 +147,10 @@ export default function SeatSelectPage({
     );
   }
 
-  // 각 행의 좌석들 (열 순서대로 정렬)
   const seatsByRow = (row: string) =>
     (seatData?.seats ?? [])
       .filter((s) => s.seatNumber.startsWith(`${row}-`))
-      .sort((a, b) => {
-        const colA = parseInt(a.seatNumber.split("-")[1]);
-        const colB = parseInt(b.seatNumber.split("-")[1]);
-        return colA - colB;
-      });
+      .sort((a, b) => parseInt(a.seatNumber.split("-")[1]) - parseInt(b.seatNumber.split("-")[1]));
 
   return (
     <div className="min-h-screen bg-gray-50 p-10">
@@ -153,12 +171,9 @@ export default function SeatSelectPage({
                     const isSelected = selectedSeats.includes(seat.seatNumber);
                     const col = seat.seatNumber.split("-")[1];
 
-                    // 좌석 상태별 스타일
                     let seatClass = "";
-                    if (seat.seatStatus === "SOLD_OUT") {
+                    if (seat.seatStatus === "SOLD_OUT" || seat.seatStatus === "HOLD") {
                       seatClass = "bg-gray-300 text-gray-400 cursor-not-allowed";
-                    } else if (seat.seatStatus === "HOLD") {
-                      seatClass = "bg-orange-300 text-white cursor-not-allowed";
                     } else if (isSelected) {
                       seatClass = "bg-yellow-400 text-white cursor-pointer";
                     } else {
@@ -180,7 +195,6 @@ export default function SeatSelectPage({
             ))}
           </div>
 
-          {/* 범례 */}
           <div className="flex gap-6 justify-center mt-8 text-sm text-gray-500 flex-wrap">
             <div className="flex items-center gap-2">
               <div className="w-5 h-5 rounded bg-blue-100"></div> 선택 가능
@@ -189,15 +203,11 @@ export default function SeatSelectPage({
               <div className="w-5 h-5 rounded bg-yellow-400"></div> 선택됨
             </div>
             <div className="flex items-center gap-2">
-              <div className="w-5 h-5 rounded bg-orange-300"></div> 점유중
-            </div>
-            <div className="flex items-center gap-2">
               <div className="w-5 h-5 rounded bg-gray-300"></div> 예매 완료
             </div>
           </div>
         </div>
 
-        {/* 선택한 좌석 + 총 금액 */}
         <div className="bg-white rounded-2xl shadow-sm p-6 mt-6">
           <h2 className="font-bold text-gray-700 mb-2">선택한 좌석</h2>
           {selectedSeats.length === 0 ? (
@@ -209,16 +219,15 @@ export default function SeatSelectPage({
               </p>
               <div className="flex justify-between items-center border-t pt-3 mb-4">
                 <span className="text-gray-600">총 결제 금액</span>
-                <span className="text-xl font-bold text-blue-600">
-                  {totalPrice.toLocaleString()}원
-                </span>
+                <span className="text-xl font-bold text-blue-600">{totalPrice.toLocaleString()}원</span>
               </div>
-              <Link
-                href="/payment"
-                className="block w-full p-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-bold text-center transition"
+              <button
+                onClick={handleProceedToPayment}
+                disabled={isReserving}
+                className="block w-full p-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-bold text-center transition disabled:opacity-50"
               >
-                선택 완료 ({selectedSeats.length}석)
-              </Link>
+                {isReserving ? "선점 중..." : `선택 완료 (${selectedSeats.length}석)`}
+              </button>
             </>
           )}
         </div>

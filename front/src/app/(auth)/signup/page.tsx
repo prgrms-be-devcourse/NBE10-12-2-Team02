@@ -1,18 +1,22 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Eye, EyeOff } from "lucide-react";
+import { apiFetch } from "@/lib/api";
 
 export default function SignupPage() {
+  const router = useRouter();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [loginId, setLoginId] = useState("");
   const [password, setPassword] = useState("");
   const [passwordCheck, setPasswordCheck] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleSignup = (e: React.FormEvent) => {
+  const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (name.trim() === "") {
@@ -36,8 +40,19 @@ export default function SignupPage() {
       return;
     }
 
-    console.log("회원가입 시도:", { name, email, loginId, password });
-    alert("회원가입 시도! (나중에 여기서 API 호출)");
+    setIsSubmitting(true);
+    try {
+      await apiFetch("/users/signin", {
+        method: "POST",
+        body: JSON.stringify({ id: loginId, email, password, name }),
+      });
+      alert("회원가입이 완료되었습니다. 로그인해주세요.");
+      router.push("/login");
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "회원가입 중 오류가 발생했습니다.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -47,9 +62,7 @@ export default function SignupPage() {
           <Link href="/" className="block text-3xl font-bold text-gray-800">
             티케팅고 🎫
           </Link>
-          <p className="my-4 text-2xl font-bold text-gray-800">
-            회원가입
-          </p>
+          <p className="my-4 text-2xl font-bold text-gray-800">회원가입</p>
         </div>
 
         <input
@@ -77,6 +90,7 @@ export default function SignupPage() {
           />
           <button
             type="button"
+            onClick={() => alert("아이디 중복확인 API가 아직 준비되지 않았습니다.")}
             className="px-4 bg-gray-100 hover:bg-gray-200 rounded-lg text-sm font-semibold whitespace-nowrap"
           >
             중복확인
@@ -110,9 +124,10 @@ export default function SignupPage() {
 
         <button
           type="submit"
-          className="w-full p-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-bold transition"
+          disabled={isSubmitting}
+          className="w-full p-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-bold transition disabled:opacity-50"
         >
-          회원가입 하기
+          {isSubmitting ? "가입 중..." : "회원가입 하기"}
         </button>
 
         <p className="text-center text-sm text-gray-500 mt-6">
