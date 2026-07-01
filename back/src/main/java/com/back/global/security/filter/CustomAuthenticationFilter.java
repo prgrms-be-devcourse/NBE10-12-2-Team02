@@ -5,6 +5,7 @@ import com.back.global.exception.ServiceException;
 import com.back.global.requestcontext.RequestContext;
 import com.back.global.rsData.RsData;
 import com.back.global.security.SecurityUser;
+import com.back.global.security.auth.SecurityAuthenticationFactory;
 import com.back.global.security.jwt.JwtTokenProvider;
 import com.back.global.security.jwt.payload.AccessTokenPayload;
 import com.back.standard.util.Ut;
@@ -27,6 +28,9 @@ import java.io.IOException;
 public class CustomAuthenticationFilter extends OncePerRequestFilter {
     private final RequestContext rq;
     private final JwtTokenProvider jwtTokenProvider;
+    private final BearerTokenExtractor bearerTokenExtractor;
+    private final CustomAuthenticationFilterSkipMatcher skipMatcher;
+    private final SecurityAuthenticationFactory securityAuthenticationFactory;
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
@@ -55,51 +59,15 @@ public class CustomAuthenticationFilter extends OncePerRequestFilter {
             return;
         }
 
-        String accessToken = extractAccessToken(authorization);
+        String accessToken = bearerTokenExtractor.extract(authorization);
         AccessTokenPayload payload = jwtTokenProvider.parseAccessToken(accessToken);
 
-        Authentication authentication = createAuthentication(payload);
+        Authentication authentication = securityAuthenticationFactory.create(payload);
         SecurityContextHolder.getContext().setAuthentication(authentication);
-    }
-
-    private String extractAccessToken(String authorization) {
-        if (!authorization.startsWith("Bearer ")) {
-            throw new ServiceException(ErrorCode.AUTH_INVALID_BEARER_HEADER);
-        }
-
-        String accessToken = authorization.substring("Bearer ".length()).trim();
-
-        if (accessToken.isBlank()) {
-            throw new ServiceException(ErrorCode.AUTH_INVALID_BEARER_HEADER);
-        }
-
-        return accessToken;
-    }
-
-    private Authentication createAuthentication(AccessTokenPayload payload) {
-        Long id = payload.userId();
-        String name = payload.name();
-
-        UserDetails securityUser = new SecurityUser(id, name);
-
-        return new UsernamePasswordAuthenticationToken(
-                securityUser,
-                null,
-                securityUser.getAuthorities()
-        );
     }
 
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
-        String path = request.getServletPath();
-        String method = request.getMethod();
-
-        return "OPTIONS".equals(method)
-                || ("POST".equals(method) && (
-                path.matches("/api/[^/]+/auth/login")
-                        || path.matches("/api/[^/]+/auth/refresh")
-                        || path.matches("/api/[^/]+/auth/logout")
-                        || path.matches("/api/[^/]+/users/signin")
-        ));
+        return skipMatcher.shouldSkip(request);
     }
 }
