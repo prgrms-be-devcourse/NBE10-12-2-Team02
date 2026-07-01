@@ -14,7 +14,7 @@ import java.util.UUID;
 
 @Component
 @RequiredArgsConstructor
-public class SeatOccupyFacade {
+public class SeatOccupyManager {
     private final ConcertService concertService;
     private final RedisTemplate<String, String> redisTemplate;
 

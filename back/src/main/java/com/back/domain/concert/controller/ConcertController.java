@@ -3,7 +3,7 @@ package com.back.domain.concert.controller;
 import com.back.domain.concert.dto.*;
 import com.back.domain.concert.enums.ConcertSortType;
 import com.back.domain.concert.service.ConcertService;
-import com.back.domain.concert.service.SeatOccupyFacade;
+import com.back.domain.concert.service.SeatOccupyManager;
 import com.back.global.annotation.ApiV1;
 import com.back.global.rq.Rq;
 import com.back.global.rsData.RsData;
@@ -21,7 +21,7 @@ import java.util.List;
 @Tag(name = "Concert", description = "Concert API")
 public class ConcertController {
     private final ConcertService concertService;
-    private final SeatOccupyFacade seatOccupyFacade;
+    private final SeatOccupyManager seatOccupyManager;
     private final Rq rq;
 
     @GetMapping
@@ -65,7 +65,7 @@ public class ConcertController {
 
         Long userId = rq.getActor().getUserId();
 
-        SeatOccupyResponse response = seatOccupyFacade.seatOccupy(
+        SeatOccupyResponse response = seatOccupyManager.seatOccupy(
                 concertId,
                 scheduleId,
                 request.seatNumber(),
