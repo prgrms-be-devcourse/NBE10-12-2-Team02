@@ -2,6 +2,7 @@ package com.back.domain.concert.service;
 
 import com.back.domain.concert.dto.SeatOccupyResponse;
 import com.back.domain.concert.dto.SeatSelectionResponse;
+import com.back.domain.concert.dto.SeatSelectionResponse.SeatDetailResponse;
 import com.back.domain.schedule.entity.ScheduleSeat;
 import com.back.domain.schedule.entity.SeatStatus;
 import com.back.global.exception.ErrorCode;
@@ -17,6 +18,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.stream.IntStream;
+
+;
 
 @Component
 @RequiredArgsConstructor
@@ -80,7 +83,7 @@ public class SeatOccupyManager {
 
         Map<String, Integer> pricesMap = concertService.convertToPriceMap(seats);
 
-        List<SeatSelectionResponse.SeatDetailResponse> seatResponses = IntStream.range(0, seats.size())
+        List<SeatDetailResponse> seatResponses = IntStream.range(0, seats.size())
                 .mapToObj(i -> {
                     ScheduleSeat seat = seats.get(i);
                     SeatStatus status = seat.getSeatStatus();
@@ -88,7 +91,7 @@ public class SeatOccupyManager {
                     boolean isHold = status == SeatStatus.AVAILABLE &&
                             (Boolean.TRUE.equals(res) || (res instanceof Number n && n.longValue() > 0));
 
-                    return new SeatSelectionResponse.SeatDetailResponse(
+                    return new SeatDetailResponse(
                             seat.getSeatNumber(),
                             isHold ? SeatStatus.HOLD : status,
                             seat.getGradeName()
