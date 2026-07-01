@@ -103,6 +103,4 @@ public class CustomAuthenticationFilter extends OncePerRequestFilter {
 
         return accessToken;
     }
-
-
 }

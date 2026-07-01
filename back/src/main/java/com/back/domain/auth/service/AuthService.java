@@ -54,12 +54,17 @@ public class AuthService {
 
     public void logout(String refreshToken) {
         RefreshTokenPayload payload = jwtTokenProvider.parseRefreshToken(refreshToken);
+        if (payload == null) return;
 
         refreshTokenRepository.delete(payload.userId(), payload.jti());
     }
 
     public TokenResponse refresh(String refreshToken) {
         RefreshTokenPayload payload = jwtTokenProvider.parseRefreshToken(refreshToken);
+
+        if (payload == null) {
+            throw new ServiceException(ErrorCode.AUTH_INVALID_REFRESH_TOKEN);
+        };
 
         String savedRefreshTokenHash = refreshTokenRepository.find(payload.userId(), payload.jti());
 

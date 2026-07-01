@@ -1,6 +1,5 @@
 package com.back.global.security;
 
-import com.back.domain.auth.service.AuthService;
 import com.back.domain.user.entity.User;
 import com.back.global.exception.ErrorCode;
 import com.back.global.exception.ServiceException;
@@ -30,7 +29,7 @@ public class JwtTokenProvider {
         Map<String, Object> payload = Ut.jwt.payload(refreshTokenSecret, refreshToken);
 
         if (payload == null) {
-            throw new ServiceException(ErrorCode.AUTH_INVALID_REFRESH_TOKEN);
+            return null;
         }
 
         Long userId = Long.valueOf(payload.get("id").toString());

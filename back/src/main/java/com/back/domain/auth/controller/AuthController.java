@@ -23,7 +23,6 @@ import org.springframework.web.bind.annotation.*;
 @Tag(name = "Auth", description = "Auth API")
 public class AuthController {
     private final Rq rq;
-    private final AuthCredentialService authCredentialService;
     private final AuthService authService;
 
     @Value("${custom.jwt.accessToken.expirationSeconds}")
