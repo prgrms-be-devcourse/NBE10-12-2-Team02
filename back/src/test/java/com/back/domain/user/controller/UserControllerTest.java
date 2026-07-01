@@ -137,7 +137,7 @@ class UserControllerTest {
     @Test
     @DisplayName("회원 탈퇴 성공")
     void t5() throws Exception {
-        mockMvc.perform(delete("/api/v1/users/me")
+        mockMvc.perform(patch("/api/v1/users/withdraw")
                         .with(user(securityUser)))
                 .andDo(print())
                 .andExpect(status().isOk())
@@ -148,7 +148,7 @@ class UserControllerTest {
     @Test
     @DisplayName("회원 탈퇴 실패 - 존재하지 않는 회원")
     void t6() throws Exception {
-        mockMvc.perform(delete("/api/v1/users/me")
+        mockMvc.perform(patch("/api/v1/users/withdraw")
                         .with(user(new SecurityUser(999L, "없는사용자"))))
                 .andDo(print())
                 .andExpect(status().isNotFound())
@@ -161,7 +161,7 @@ class UserControllerTest {
         user.withdraw();
         userRepository.saveAndFlush(user);
 
-        mockMvc.perform(delete("/api/v1/users/me")
+        mockMvc.perform(patch("/api/v1/users/withdraw")
                         .with(user(securityUser)))
                 .andDo(print())
                 .andExpect(status().isNotFound())
