@@ -2,7 +2,7 @@ package com.back.global.config;
 
 import com.back.global.exception.ErrorCode;
 import com.back.global.rsData.RsData;
-import com.back.global.security.CustomAuthenticationFilter;
+import com.back.global.security.filter.CustomAuthenticationFilter;
 import com.back.standard.util.Ut;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;

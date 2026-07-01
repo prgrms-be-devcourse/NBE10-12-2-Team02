@@ -1,10 +1,11 @@
-package com.back.global.security;
+package com.back.global.security.filter;
 
 import com.back.domain.user.entity.User;
 import com.back.global.exception.ErrorCode;
 import com.back.global.exception.ServiceException;
 import com.back.global.rq.Rq;
 import com.back.global.rsData.RsData;
+import com.back.global.security.SecurityUser;
 import com.back.standard.util.Ut;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;

@@ -1,8 +1,6 @@
-package com.back.global.security;
+package com.back.global.security.jwt;
 
 import com.back.domain.user.entity.User;
-import com.back.global.exception.ErrorCode;
-import com.back.global.exception.ServiceException;
 import com.back.standard.util.Ut;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
