@@ -20,18 +20,22 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
+import org.springframework.data.redis.core.HashOperations;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.util.ReflectionTestUtils;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 
-import static com.back.domain.schedule.entity.SeatStatus.AVAILABLE;
-import static com.back.domain.schedule.entity.SeatStatus.HOLD;
-import static com.back.domain.schedule.entity.SeatStatus.SOLD_OUT;
+import static com.back.domain.schedule.entity.SeatStatus.*;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -57,6 +61,9 @@ class TicketControllerTest {
     private Concert concert;
     private Schedule schedule;
     private ScheduleSeat seat;
+
+    @MockitoBean
+    private StringRedisTemplate redisTemplate;
 
     @Autowired
     TicketControllerTest(
@@ -91,6 +98,13 @@ class TicketControllerTest {
         Venue venue = venueRepository.save(Venue.create("공연장", "서울", 15000L));
         schedule = scheduleRepository.save(Schedule.create(concert, venue, LocalDateTime.now().plusHours(12), 1));
         seat = scheduleSeatRepository.save(ScheduleSeat.create(schedule,  "VIP","A-1",150000, HOLD));
+
+        @SuppressWarnings("unchecked")
+        HashOperations<String, Object, Object> hashOperations = mock(HashOperations.class);
+        when(redisTemplate.opsForHash()).thenReturn(hashOperations);
+
+        when(hashOperations.get(any(), eq("userId"))).thenReturn(user.getUserId().toString());
+        when(hashOperations.get(any(), eq("occupyToken"))).thenReturn("test-token");
     }
 
     @Test
@@ -100,7 +114,8 @@ class TicketControllerTest {
                 {
                   "concertId": %d,
                   "scheduleId": %d,
-                  "seatNumber": "A-1"
+                  "seatNumber": "A-1",
+                  "occupyToken": "test-token"
                 }
                 """.formatted(concert.getConcertId(), schedule.getScheduleId());
 
