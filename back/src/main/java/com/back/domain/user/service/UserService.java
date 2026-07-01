@@ -65,8 +65,13 @@ public class UserService {
                 .orElseThrow(() -> new ServiceException(ErrorCode.USER_NOT_FOUND));
 
         if (request.name() != null) {
-            user.updateName(request.name());
+            String trimmed = request.name().trim();
+            if (trimmed.isEmpty() || trimmed.contains(" ")) {
+                throw new ServiceException(ErrorCode.USER_NAME_INVALID);
+            }
+            user.updateName(trimmed);
         }
+
         if (request.email() != null) {
             if (!user.getEmail().equals(request.email())
                     && userRepository.existsByEmailAndDeletedAtIsNull(request.email())) {
