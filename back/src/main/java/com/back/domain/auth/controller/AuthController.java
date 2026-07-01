@@ -1,7 +1,6 @@
 package com.back.domain.auth.controller;
 
 import com.back.domain.auth.dto.LoginRequest;
-import com.back.domain.auth.dto.LoginResponse;
 import com.back.domain.auth.dto.TokenResponse;
 import com.back.domain.auth.service.AuthService;
 import com.back.global.annotation.ApiV1;
@@ -30,7 +29,7 @@ public class AuthController {
 
     @PostMapping("/login")
     @Operation(summary = "로그인", description = "로그인 API")
-    public RsData<LoginResponse> login(@RequestBody @Valid LoginRequest request) {
+    public RsData<Void> login(@RequestBody @Valid LoginRequest request) {
         TokenResponse tokenResponse = authService.login(request.id(), request.password());
 
         String accessToken = tokenResponse.accessToken();
@@ -41,8 +40,7 @@ public class AuthController {
 
         return new RsData<>(
                 "200-1",
-                "로그인 성공 및 인증 토큰이 발급되었습니다.",
-                LoginResponse.of(accessToken, "Bearer", accessTokenExpirationSeconds)
+                "로그인 성공 및 인증 토큰이 발급되었습니다."
         );
     }
 
