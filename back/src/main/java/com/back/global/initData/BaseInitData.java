@@ -30,7 +30,6 @@ public class BaseInitData implements CommandLineRunner {
     @Override
     @Transactional
     public void run(String... args) {
-        // 중복 실행 방지: 이미 데이터가 있으면 skip
         if (concertRepository.count() > 0) {
             return;
         }
