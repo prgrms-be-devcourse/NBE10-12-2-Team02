@@ -54,7 +54,7 @@ public class SeatOccupyManager {
             concertService.updateSeatStatusToHold(scheduleId, seatNumber);
         } catch (Exception e) {
             redisTemplate.delete(redisKey);
-            throw e;
+            throw new ServiceException(ErrorCode.CONCERT_SEAT_HOLD_FAILED);
         }
 
         return SeatOccupyResponse.of(occupyToken, OCCUPY_TTL_SECONDS);
