@@ -32,7 +32,7 @@ public class AuthController {
         String accessToken = tokenResponse.accessToken();
         String refreshToken = tokenResponse.refreshToken();
 
-        rq.setCookie("refreshToken", refreshToken);
+        rq.setCookie("refreshToken", refreshToken, "/api/v1/auth");
         rq.setHeader("Authorization", accessToken);
 
         return new RsData<>(
@@ -48,7 +48,7 @@ public class AuthController {
         String refreshToken = rq.getCookieValue("refreshToken", "");
         authService.logout(refreshToken);
 
-        rq.deleteCookie("refreshToken");
+        rq.deleteCookie("refreshToken", "/api/v1/auth");
 
         return new RsData<>(
                 "200-1",
@@ -67,7 +67,7 @@ public class AuthController {
 
         TokenResponse tokenResponse = authService.refresh(refreshToken);
 
-        rq.setCookie("refreshToken", tokenResponse.refreshToken());
+        rq.setCookie("refreshToken", tokenResponse.refreshToken(), "/api/v1/auth");
         rq.setHeader("Authorization", tokenResponse.accessToken());
 
         return new RsData<>(

@@ -59,10 +59,14 @@ public class RequestContext {
     }
 
     public void setCookie(String name, String value) {
+        setCookie(name, value, "/");
+    }
+
+    public void setCookie(String name, String value, String path) {
         if (value == null) value = "";
 
         Cookie cookie = new Cookie(name, value);
-        cookie.setPath("/");
+        cookie.setPath(path);
         cookie.setHttpOnly(true);
         cookie.setSecure(false); // localhost 테스트
         cookie.setAttribute("SameSite", "Lax");
@@ -73,7 +77,7 @@ public class RequestContext {
         resp.addCookie(cookie);
     }
 
-    public void deleteCookie(String name) {
-        setCookie(name, null);
+    public void deleteCookie(String name, String path) {
+        setCookie(name, null, path);
     }
 }
