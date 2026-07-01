@@ -22,7 +22,7 @@ import java.util.List;
 public class ConcertController {
     private final ConcertService concertService;
     private final SeatOccupyManager seatOccupyManager;
-    private final RequestContext rq;
+    private final RequestContext requestContext;
 
     @GetMapping
     @Operation(summary = "콘서트 목록 조회", description = "콘서트 목록 조회 API")
@@ -65,7 +65,7 @@ public class ConcertController {
             @PathVariable Long scheduleId,
             @RequestBody SeatOccupyRequest request) {
 
-        Long userId = rq.getActor().getUserId();
+        Long userId = requestContext.getActor().getUserId();
 
         SeatOccupyResponse response = seatOccupyManager.seatOccupy(
                 concertId,
