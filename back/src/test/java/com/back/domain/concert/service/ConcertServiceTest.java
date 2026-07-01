@@ -45,15 +45,16 @@ class ConcertServiceTest {
     private ScheduleRepository scheduleRepository;
     @Autowired
     private ScheduleSeatRepository scheduleSeatRepository;
-    // 1. 설정 클래스 없이 어노테이션만으로 레디스 템플릿 모킹 대체
+
     @MockitoBean
     private StringRedisTemplate redisTemplate;
     private Concert concert;
     private Schedule schedule;
     private ScheduleSeat seat;
 
-    // Redis의 원자적 선점 동작을 흉내 낼 인메모리 맵
+
     private final ConcurrentHashMap<String, String> localStore = new ConcurrentHashMap<>();
+
     @BeforeEach
     void setUp() {
         scheduleSeatRepository.deleteAll();
@@ -61,30 +62,29 @@ class ConcertServiceTest {
         concertRepository.deleteAll();
         venueRepository.deleteAll();
         localStore.clear();
-        // 테스트 데이터 생성
+
         concert = concertRepository.save(Concert.create("아이유 콘서트", "설명", LocalDateTime.now(), LocalDateTime.now().plusDays(1), "poster.jpg"));
         Venue venue = venueRepository.save(Venue.create("올림픽체조경기장", "서울", 15000L));
         schedule = scheduleRepository.save(Schedule.create(concert, venue, LocalDateTime.now().plusHours(12), 1));
         seat = scheduleSeatRepository.save(ScheduleSeat.create(schedule, "VIP", "A-1", 150000, SeatStatus.AVAILABLE));
-        // 2. 가변인자(Varargs) 개수를 일치시켜 Mockito 매칭 에러 우회 및 모사
+
         doAnswer(invocation -> {
             List<String> keys = invocation.getArgument(1);
             String key = keys.get(0);
 
-            // varargs 인자가 평탄화되어 들어오므로 index 2에서 userId 추출
             Object[] args = invocation.getArguments();
             String userId = args[2].toString();
-            // ConcurrentHashMap으로 HSETNX 원자적 동작 모사
+
             if (localStore.putIfAbsent(key, userId) == null) {
-                return 1L; // 선점 성공
+                return 1L;
             }
-            return 0L; // 선점 실패
+            return 0L;
         }).when(redisTemplate).execute(
                 any(RedisScript.class),
                 anyList(),
-                any(Object.class), // ARGV[1] (userId)
-                any(Object.class), // ARGV[2] (occupyToken)
-                any(Object.class)  // ARGV[3] (expireSeconds)
+                any(Object.class),
+                any(Object.class),
+                any(Object.class)
         );
     }
 
@@ -97,6 +97,7 @@ class ConcertServiceTest {
         CountDownLatch doneLatch = new CountDownLatch(threadCount);
         AtomicInteger successCount = new AtomicInteger(0);
         AtomicInteger failCount = new AtomicInteger(0);
+
         for (int i = 0; i < threadCount; i++) {
             final long userId = i + 1;
             executorService.execute(() -> {
@@ -117,14 +118,13 @@ class ConcertServiceTest {
                 }
             });
         }
-        startLatch.countDown(); // 출발
-        doneLatch.await();      // 대기
+        startLatch.countDown();
+        doneLatch.await();
         executorService.shutdown();
-        // 1명 성공, 9명 실패 검증
+
         assertThat(successCount.get()).isEqualTo(1);
         assertThat(failCount.get()).isEqualTo(threadCount - 1);
 
-        // DB 상태 확인
         ScheduleSeat updatedSeat = scheduleSeatRepository.findById(seat.getConcertSeatPriceId()).orElseThrow();
         assertThat(updatedSeat.getSeatStatus()).isEqualTo(SeatStatus.AVAILABLE);
     }
