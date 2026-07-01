@@ -57,7 +57,7 @@ class ConcertControllerTest {
     @Test
     @DisplayName("좌석 선택 페이지 조회 성공")
     void t1() throws Exception {
-        Concert concert = Concert.create("아이유 콘서트", "설명", LocalDateTime.now(), LocalDateTime.now().plusDays(1), "포스터");
+        Concert concert = Concert.create("아이유 콘서트", "설명", LocalDateTime.now(), LocalDateTime.now().plusDays(1), "poster.jpg");
         concertRepository.save(concert);
 
         Venue venue = Venue.create("올림픽체조경기장", "서울", 15000L);

@@ -49,7 +49,7 @@ public class ConcertController {
             @PathVariable Long concertId,
             @PathVariable Long scheduleId) {
 
-        SeatSelectionResponse response = concertService.getSeatSelection(concertId, scheduleId);
+        SeatSelectionResponse response = seatOccupyManager.getSeatSelection(concertId, scheduleId);
 
         return new RsData<>(
                 "200-1",

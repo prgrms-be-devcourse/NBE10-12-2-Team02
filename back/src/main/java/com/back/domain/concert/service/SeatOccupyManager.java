@@ -1,16 +1,22 @@
 package com.back.domain.concert.service;
 
 import com.back.domain.concert.dto.SeatOccupyResponse;
+import com.back.domain.concert.dto.SeatSelectionResponse;
+import com.back.domain.schedule.entity.ScheduleSeat;
+import com.back.domain.schedule.entity.SeatStatus;
 import com.back.global.exception.ErrorCode;
 import com.back.global.exception.ServiceException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.redis.core.RedisCallback;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.script.DefaultRedisScript;
 import org.springframework.data.redis.core.script.RedisScript;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
+import java.util.stream.IntStream;
 
 @Component
 @RequiredArgsConstructor
@@ -21,12 +27,18 @@ public class SeatOccupyManager {
     private static final long OCCUPY_TTL_SECONDS = 600;
     private static final RedisScript<Long> OCCUPY_SCRIPT = new DefaultRedisScript<>(
             """
-            if redis.call('EXISTS', KEYS[1]) == 0 then
+            if redis.call('EXISTS', KEYS[1]) == 1 then
+              if redis.call('HGET', KEYS[1], 'userId') == ARGV[1] then
+                redis.call('HSET', KEYS[1], 'occupyToken', ARGV[2])
+                redis.call('EXPIRE', KEYS[1], ARGV[3])
+                return 1
+              else
+                return 0
+              end
+            else
               redis.call('HSET', KEYS[1], 'userId', ARGV[1], 'occupyToken', ARGV[2])
               redis.call('EXPIRE', KEYS[1], ARGV[3])
               return 1
-            else
-              return 0
             end
             """,
             Long.class
@@ -34,8 +46,9 @@ public class SeatOccupyManager {
 
     public SeatOccupyResponse seatOccupy(Long concertId, Long scheduleId, String seatNumber, Long userId) {
         concertService.validateConcertScheduleMatch(concertId, scheduleId);
+        concertService.validateSeatAvailable(scheduleId, seatNumber);
 
-        String redisKey = String.format("seat:occupy:%d:%d:%s", concertId, scheduleId, seatNumber);
+        String redisKey = generateKey(concertId, scheduleId, seatNumber);
         String occupyToken = UUID.randomUUID().toString();
 
         Long result = redisTemplate.execute(
@@ -50,13 +63,42 @@ public class SeatOccupyManager {
             throw new ServiceException(ErrorCode.SEAT_HELD_BY_OTHER_USER);
         }
 
-        try {
-            concertService.updateSeatStatusToHold(scheduleId, seatNumber);
-        } catch (Exception e) {
-            redisTemplate.delete(redisKey);
-            throw new ServiceException(ErrorCode.CONCERT_SEAT_HOLD_FAILED);
-        }
-
         return SeatOccupyResponse.of(occupyToken, OCCUPY_TTL_SECONDS);
+    }
+
+    public SeatSelectionResponse getSeatSelection(Long concertId, Long scheduleId) {
+        concertService.validateConcertScheduleMatch(concertId, scheduleId);
+        List<ScheduleSeat> seats = concertService.getScheduleSeats(scheduleId);
+
+        List<Object> existsResults = redisTemplate.executePipelined((RedisCallback<Object>) connection -> {
+            for (var seat : seats) {
+                String key = generateKey(concertId, scheduleId, seat.getSeatNumber());
+                connection.keyCommands().exists(key.getBytes());
+            }
+            return null;
+        });
+        Map<String, Integer> pricesMap = concertService.convertToPriceMap(seats);
+
+        List<SeatSelectionResponse.SeatDetailResponse> seatResponses = IntStream.range(0, seats.size())
+                .mapToObj(i -> {
+                    ScheduleSeat seat = seats.get(i);
+                    boolean isHold = seat.getSeatStatus() == SeatStatus.AVAILABLE && isHold(existsResults.get(i));
+
+                    return new SeatSelectionResponse.SeatDetailResponse(
+                            seat.getSeatNumber(),
+                            isHold ? SeatStatus.HOLD : seat.getSeatStatus(),
+                            seat.getGradeName()
+                    );
+                })
+                .toList();
+        return SeatSelectionResponse.of(concertId, scheduleId, pricesMap, seatResponses);
+    }
+
+    private boolean isHold(Object result) {
+        return Boolean.TRUE.equals(result) || (result instanceof Number n && n.longValue() > 0);
+    }
+
+    public static String generateKey(Long concertId, Long scheduleId, String seatNumber) {
+        return String.format("seat:occupy:%d:%d:%s", concertId, scheduleId, seatNumber);
     }
 }
