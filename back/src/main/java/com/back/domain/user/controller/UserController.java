@@ -30,7 +30,7 @@ public class UserController {
         return new RsData<>("200-1", "회원가입이 완료되었습니다.", userService.signup(request));
     }
 
-    @DeleteMapping("/me")
+    @PatchMapping("/withdraw")
     @Operation(summary = "회원 탈퇴", description = "회원 탈퇴 API")
     public RsData<Void> withdraw(@AuthenticationPrincipal SecurityUser securityUser) {
         userService.withdraw(securityUser.getId());
