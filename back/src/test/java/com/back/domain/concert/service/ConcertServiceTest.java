@@ -48,10 +48,10 @@ class ConcertServiceTest {
 
     @MockitoBean
     private StringRedisTemplate redisTemplate;
+
     private Concert concert;
     private Schedule schedule;
     private ScheduleSeat seat;
-
 
     private final ConcurrentHashMap<String, String> localStore = new ConcurrentHashMap<>();
 
@@ -71,9 +71,7 @@ class ConcertServiceTest {
         doAnswer(invocation -> {
             List<String> keys = invocation.getArgument(1);
             String key = keys.get(0);
-
-            Object[] args = invocation.getArguments();
-            String userId = args[2].toString();
+            String userId = invocation.getArgument(2).toString();
 
             if (localStore.putIfAbsent(key, userId) == null) {
                 return 1L;
@@ -92,35 +90,34 @@ class ConcertServiceTest {
     @DisplayName("실시간 좌석 선점 동시성 테스트")
     void seatOccupy() throws InterruptedException {
         int threadCount = 10;
-        ExecutorService executorService = Executors.newFixedThreadPool(threadCount);
         CountDownLatch startLatch = new CountDownLatch(1);
         CountDownLatch doneLatch = new CountDownLatch(threadCount);
         AtomicInteger successCount = new AtomicInteger(0);
         AtomicInteger failCount = new AtomicInteger(0);
 
-        for (int i = 0; i < threadCount; i++) {
-            final long userId = i + 1;
-            executorService.execute(() -> {
-                try {
-                    startLatch.await();
-
-                    seatOccupyManager.seatOccupy(
-                            concert.getConcertId(),
-                            schedule.getScheduleId(),
-                            seat.getSeatNumber(),
-                            userId
-                    );
-                    successCount.incrementAndGet();
-                } catch (Exception e) {
-                    failCount.incrementAndGet();
-                } finally {
-                    doneLatch.countDown();
-                }
-            });
+        try (ExecutorService executorService = Executors.newFixedThreadPool(threadCount)) {
+            for (int i = 0; i < threadCount; i++) {
+                final long userId = i + 1;
+                executorService.execute(() -> {
+                    try {
+                        startLatch.await();
+                        seatOccupyManager.seatOccupy(
+                                concert.getConcertId(),
+                                schedule.getScheduleId(),
+                                seat.getSeatNumber(),
+                                userId
+                        );
+                        successCount.incrementAndGet();
+                    } catch (Exception e) {
+                        failCount.incrementAndGet();
+                    } finally {
+                        doneLatch.countDown();
+                    }
+                });
+            }
+            startLatch.countDown();
+            doneLatch.await();
         }
-        startLatch.countDown();
-        doneLatch.await();
-        executorService.shutdown();
 
         assertThat(successCount.get()).isEqualTo(1);
         assertThat(failCount.get()).isEqualTo(threadCount - 1);

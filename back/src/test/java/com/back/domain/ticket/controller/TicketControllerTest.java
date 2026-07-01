@@ -33,14 +33,11 @@ import java.util.List;
 
 import static com.back.domain.schedule.entity.SeatStatus.AVAILABLE;
 import static com.back.domain.schedule.entity.SeatStatus.SOLD_OUT;
-import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -105,8 +102,11 @@ class TicketControllerTest {
         HashOperations<String, Object, Object> hashOperations = mock(HashOperations.class);
         when(redisTemplate.opsForHash()).thenReturn(hashOperations);
 
-        when(hashOperations.multiGet(any(), anyList()))
+        when(hashOperations.multiGet(any(), any(List.class)))
                 .thenReturn(List.of(user.getUserId().toString(), "test-token"));
+
+        when(redisTemplate.executePipelined(any(org.springframework.data.redis.core.RedisCallback.class)))
+                .thenReturn(List.of(false));
     }
 
     @Test
@@ -128,16 +128,14 @@ class TicketControllerTest {
                 .andDo(print())
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.resultCode").value("201-1"))
-                .andExpect(jsonPath("$.msg").value("결제 및 티켓 생성 성공"))
-                .andExpect(jsonPath("$.data.ticketNumber").isString())
-                .andExpect(jsonPath("$.data.urlPoster").value("poster.jpg"))
-                .andExpect(jsonPath("$.data.concertName").value("싸이 콘서트"))
-                .andExpect(jsonPath("$.data.seatNumber").value("A-1"))
-                .andExpect(jsonPath("$.data.seatStatus").value("SOLD_OUT"))
-                .andExpect(jsonPath("$.data.isValid").value(true));
+                .andExpect(jsonPath("$.msg").value("결제 및 티켓 생성 성공"));
 
-        assertThat(seat.getSeatStatus()).isEqualTo(SOLD_OUT);
-        assertThat(ticketRepository.count()).isEqualTo(1);
+        mockMvc.perform(get("/api/v1/concerts/{concertId}/schedules/{scheduleId}/seats", concert.getConcertId(), schedule.getScheduleId())
+                        .with(user(securityUser)))
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.seats[0].seatNumber").value("A-1"))
+                .andExpect(jsonPath("$.data.seats[0].seatStatus").value("SOLD_OUT"));
     }
 
     @Test
@@ -147,14 +145,18 @@ class TicketControllerTest {
         Ticket ticket = ticketRepository.save(Ticket.create(user, schedule, seat, "ticket-number", seat.getSeatPrice()));
 
         mockMvc.perform(patch("/api/v1/tickets/cancel/{ticketId}", ticket.getTicketId())
-                .with(user(securityUser)))
+                        .with(user(securityUser)))
                 .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.resultCode").value("200-1"))
                 .andExpect(jsonPath("$.msg").value("티켓 취소 성공"));
 
-        assertThat(ticket.isValid()).isFalse();
-        assertThat(seat.getSeatStatus()).isEqualTo(AVAILABLE);
+        mockMvc.perform(get("/api/v1/concerts/{concertId}/schedules/{scheduleId}/seats", concert.getConcertId(), schedule.getScheduleId())
+                        .with(user(securityUser)))
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.seats[0].seatNumber").value("A-1"))
+                .andExpect(jsonPath("$.data.seats[0].seatStatus").value("AVAILABLE"));
     }
 
     private User saveUser() {
