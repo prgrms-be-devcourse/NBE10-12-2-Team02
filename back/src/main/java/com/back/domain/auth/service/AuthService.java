@@ -6,7 +6,7 @@ import com.back.domain.user.repository.UserRepository;
 import com.back.global.exception.ErrorCode;
 import com.back.global.exception.ServiceException;
 import com.back.global.security.jwt.JwtTokenProvider;
-import com.back.global.security.jwt.RefreshTokenPayload;
+import com.back.global.security.jwt.payload.RefreshTokenPayload;
 import com.back.global.security.jwt.RefreshTokenRepository;
 import com.back.global.security.jwt.TokenHashUtil;
 import lombok.RequiredArgsConstructor;

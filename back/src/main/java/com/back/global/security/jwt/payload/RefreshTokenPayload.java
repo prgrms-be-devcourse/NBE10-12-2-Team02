@@ -1,4 +1,4 @@
-package com.back.global.security.jwt;
+package com.back.global.security.jwt.payload;
 
 public record RefreshTokenPayload(
         Long userId,

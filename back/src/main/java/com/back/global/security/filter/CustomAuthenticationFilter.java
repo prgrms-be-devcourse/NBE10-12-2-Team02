@@ -1,18 +1,18 @@
 package com.back.global.security.filter;
 
-import com.back.domain.user.entity.User;
 import com.back.global.exception.ErrorCode;
 import com.back.global.exception.ServiceException;
 import com.back.global.requestcontext.RequestContext;
 import com.back.global.rsData.RsData;
 import com.back.global.security.SecurityUser;
+import com.back.global.security.jwt.JwtTokenProvider;
+import com.back.global.security.jwt.payload.AccessTokenPayload;
 import com.back.standard.util.Ut;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -21,19 +21,18 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
-import java.util.Map;
 
 @Component
 @RequiredArgsConstructor
 public class CustomAuthenticationFilter extends OncePerRequestFilter {
-    @Value("${custom.jwt.accessToken.secret}")
-    private String accessTokenSecret;
     private final RequestContext rq;
+    private final JwtTokenProvider jwtTokenProvider;
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
         try {
-            work(request, response, filterChain);
+            authenticateByAccessToken();
+            filterChain.doFilter(request, response);
         } catch (ServiceException e) {
             SecurityContextHolder.clearContext();
 
@@ -49,59 +48,58 @@ public class CustomAuthenticationFilter extends OncePerRequestFilter {
         }
     }
 
-    private void work(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
-
+    private void authenticateByAccessToken() {
         String authorization = rq.getHeader("Authorization", "");
 
         if (authorization.isBlank()) {
-            filterChain.doFilter(request, response);
             return;
         }
 
-        String accessToken = getAccessToken(authorization);
+        String accessToken = extractAccessToken(authorization);
+        AccessTokenPayload payload = jwtTokenProvider.parseAccessToken(accessToken);
 
-        Map<String, Object> parsedPayload = Ut.jwt.payload(accessTokenSecret, accessToken);
-
-        if (parsedPayload == null) {
-            filterChain.doFilter(request, response);
-            return;
-        }
-
-        Long id = ((Number) parsedPayload.get("id")).longValue();
-        String name = (String) parsedPayload.get("name");
-
-        User user = User.create(id, name);
-
-        UserDetails securityUser = new SecurityUser(
-                user.getUserId(),
-                user.getName()
-        );
-
-        Authentication authentication = new UsernamePasswordAuthenticationToken(
-                securityUser,
-                null,
-                securityUser.getAuthorities()
-        );
-
-        SecurityContextHolder
-                .getContext()
-                .setAuthentication(authentication);
-
-        filterChain.doFilter(request, response);
+        Authentication authentication = createAuthentication(payload);
+        SecurityContextHolder.getContext().setAuthentication(authentication);
     }
 
-    private String getAccessToken(String authorization) {
+    private String extractAccessToken(String authorization) {
         if (!authorization.startsWith("Bearer ")) {
             throw new ServiceException(ErrorCode.AUTH_INVALID_BEARER_HEADER);
         }
 
-        String[] accessTokenBits = authorization.split(" ", 2);
-        String accessToken = accessTokenBits.length == 2 ? accessTokenBits[1] : "";
+        String accessToken = authorization.substring("Bearer ".length()).trim();
 
         if (accessToken.isBlank()) {
             throw new ServiceException(ErrorCode.AUTH_INVALID_BEARER_HEADER);
         }
 
         return accessToken;
+    }
+
+    private Authentication createAuthentication(AccessTokenPayload payload) {
+        Long id = payload.userId();
+        String name = payload.name();
+
+        UserDetails securityUser = new SecurityUser(id, name);
+
+        return new UsernamePasswordAuthenticationToken(
+                securityUser,
+                null,
+                securityUser.getAuthorities()
+        );
+    }
+
+    @Override
+    protected boolean shouldNotFilter(HttpServletRequest request) {
+        String path = request.getServletPath();
+        String method = request.getMethod();
+
+        return "OPTIONS".equals(method)
+                || ("POST".equals(method) && (
+                path.matches("/api/[^/]+/auth/login")
+                        || path.matches("/api/[^/]+/auth/refresh")
+                        || path.matches("/api/[^/]+/auth/logout")
+                        || path.matches("/api/[^/]+/users/signin")
+        ));
     }
 }
