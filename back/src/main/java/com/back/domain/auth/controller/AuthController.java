@@ -24,9 +24,6 @@ public class AuthController {
     private final RequestContext rq;
     private final AuthService authService;
 
-    @Value("${custom.jwt.accessToken.expirationSeconds}")
-    private Number accessTokenExpirationSeconds;
-
     @PostMapping("/login")
     @Operation(summary = "로그인", description = "로그인 API")
     public RsData<Void> login(@RequestBody @Valid LoginRequest request) {
