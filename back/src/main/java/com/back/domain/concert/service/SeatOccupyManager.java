@@ -14,6 +14,7 @@ import org.springframework.data.redis.core.script.DefaultRedisScript;
 import org.springframework.data.redis.core.script.RedisScript;
 import org.springframework.stereotype.Component;
 
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -76,7 +77,8 @@ public class SeatOccupyManager {
         List<Object> existsResults = redisTemplate.executePipelined((RedisCallback<Object>) connection -> {
             for (var seat : seats) {
                 String key = generateKey(concertId, scheduleId, seat.getSeatNumber());
-                connection.keyCommands().exists(key.getBytes());
+                byte[] rawKey = key.getBytes(StandardCharsets.UTF_8);
+                connection.keyCommands().exists(rawKey);
             }
             return null;
         });
