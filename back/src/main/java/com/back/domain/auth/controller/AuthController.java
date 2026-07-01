@@ -12,7 +12,6 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.bind.annotation.*;
 
 @ApiV1
@@ -33,7 +32,7 @@ public class AuthController {
         String refreshToken = tokenResponse.refreshToken();
 
         rq.setCookie("refreshToken", refreshToken, "/api/v1/auth");
-        rq.setHeader("Authorization", accessToken);
+        rq.setHeader("Authorization", "Bearer " + accessToken);
 
         return new RsData<>(
                 "200-1",
@@ -68,7 +67,7 @@ public class AuthController {
         TokenResponse tokenResponse = authService.refresh(refreshToken);
 
         rq.setCookie("refreshToken", tokenResponse.refreshToken(), "/api/v1/auth");
-        rq.setHeader("Authorization", tokenResponse.accessToken());
+        rq.setHeader("Authorization", "Bearer " + tokenResponse.accessToken());
 
         return new RsData<>(
                 "200-1",
