@@ -22,8 +22,10 @@ export function getAccessToken() {
 export function decodeToken(): { id: number; name: string } | null {
   if (!accessToken) return null;
   try {
-    const payload = accessToken.split(".")[1];
-    const json = JSON.parse(atob(payload.replace(/-/g, "+").replace(/_/g, "/")));
+    const base64 = accessToken.split(".")[1].replace(/-/g, "+").replace(/_/g, "/");
+    const binary = atob(base64);
+    const bytes = Uint8Array.from(binary, (c) => c.charCodeAt(0));
+    const json = JSON.parse(new TextDecoder("utf-8").decode(bytes));
     return { id: json.id, name: json.name };
   } catch {
     return null;
