@@ -32,7 +32,8 @@ public class SecurityConfig {
                                         HttpMethod.GET,
                                         "/api/*/concerts",
                                         "/api/*/concerts/*",
-                                        "/api/*/schedules/**"
+                                        "/api/*/schedules/**",
+                                        "/api/*/users/check-id"
 
                                 ).permitAll()
                                 .requestMatchers(
