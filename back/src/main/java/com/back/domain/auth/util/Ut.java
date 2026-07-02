@@ -1,17 +1,13 @@
-package com.back.standard.util;
+package com.back.domain.auth.util;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.ClaimsBuilder;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
-import lombok.SneakyThrows;
 import tools.jackson.databind.ObjectMapper;
 
 import javax.crypto.SecretKey;
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
 import java.security.Key;
-import java.util.Arrays;
 import java.util.Date;
 import java.util.LinkedHashMap;
 import java.util.Map;
