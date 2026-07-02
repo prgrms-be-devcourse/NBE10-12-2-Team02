@@ -7,11 +7,15 @@ import com.back.domain.user.entity.User;
 import com.back.domain.user.repository.UserRepository;
 import com.back.global.exception.ErrorCode;
 import com.back.global.exception.ServiceException;
+import com.back.global.security.jwt.BlacklistRepository;
+import com.back.global.security.jwt.JwtTokenProvider;
 import com.back.global.security.jwt.RefreshTokenRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.time.Duration;
 import java.util.List;
 
 @Service
@@ -23,6 +27,8 @@ public class UserService {
     private final TicketRepository ticketRepository;
     private final PasswordEncoder passwordEncoder;
     private final RefreshTokenRepository refreshTokenRepository;
+    private final BlacklistRepository blacklistRepository;
+    private final JwtTokenProvider jwtTokenProvider;
 
     @Transactional
     public SignupResponse signup(SignupRequest request) {
@@ -41,11 +47,12 @@ public class UserService {
     }
 
     @Transactional
-    public void withdraw(Long userId) {
+    public void withdraw(Long userId, String accessToken) {
         User user = userRepository.findByUserIdAndDeletedAtIsNull(userId)
                 .orElseThrow(() -> new ServiceException(ErrorCode.USER_NOT_FOUND_OR_DELETED));
         user.withdraw();
         refreshTokenRepository.deleteAllByUserId(userId);
+        blacklistRepository.add(accessToken, Duration.ofSeconds(jwtTokenProvider.getAccessTokenExpireSeconds()));
     }
 
     public MyPageResponse getMyPage(Long userId) {
