@@ -20,14 +20,7 @@ interface ScheduleItem {
   scheduleId: number;
   round: number;
   scheduleDate: string;
-}
-
-interface ScheduleItem {
-  concertId: number;
-  scheduleId: number;
-  round: number;
-  scheduleDate: string;
-  remainingSeats: number;
+  remainingSeats?: number;
 }
 
 export default function ConcertDetailPage({
@@ -146,12 +139,13 @@ export default function ConcertDetailPage({
                           {schedule.scheduleDate?.slice(0, 16).replace("T", " ")}
                         </span>
                         <br />
-                        <span
-                          className={`text-xs font-normal ${schedule.remainingSeats === 0 ? "text-red-500" : "text-gray-400"
-                            }`}
-                        >
-                          {schedule.remainingSeats === 0 ? "매진" : `잔여 ${schedule.remainingSeats}석`}
-                        </span>
+                        {schedule.remainingSeats !== undefined && (
+                          <span
+                            className={`text-xs font-normal ${schedule.remainingSeats === 0 ? "text-red-500" : "text-gray-400"}`}
+                          >
+                            {schedule.remainingSeats === 0 ? "매진" : `잔여 ${schedule.remainingSeats}석`}
+                          </span>
+                        )}
                       </button>
                     ))}
                   </div>
