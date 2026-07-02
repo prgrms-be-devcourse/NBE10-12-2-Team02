@@ -15,6 +15,27 @@ export default function SignupPage() {
   const [passwordCheck, setPasswordCheck] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isIdChecked, setIsIdChecked] = useState(false);
+
+  const handleLoginIdChange = (value: string) => {
+    setLoginId(value);
+    setIsIdChecked(false);
+  };
+
+  const handleCheckId = async () => {
+    if (loginId.trim() === "") {
+      alert("아이디를 입력해주세요.");
+      return;
+    }
+    try {
+      await apiFetch(`/users/check-id?id=${encodeURIComponent(loginId)}`);
+      alert("사용 가능한 아이디입니다.");
+      setIsIdChecked(true);
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "중복확인에 실패했습니다.");
+      setIsIdChecked(false);
+    }
+  };
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -39,10 +60,14 @@ export default function SignupPage() {
       alert("비밀번호가 일치하지 않습니다.");
       return;
     }
+    if (!isIdChecked) {
+      alert("아이디 중복확인을 해주세요.");
+      return;
+    }
 
     setIsSubmitting(true);
     try {
-      await apiFetch("/users/signin", {
+      await apiFetch("/users/signup", {
         method: "POST",
         body: JSON.stringify({ id: loginId, email, password, name }),
       });
@@ -85,15 +110,19 @@ export default function SignupPage() {
             type="text"
             placeholder="아이디"
             value={loginId}
-            onChange={(e) => setLoginId(e.target.value)}
+            onChange={(e) => handleLoginIdChange(e.target.value)}
             className="flex-1 p-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
           />
           <button
             type="button"
-            onClick={() => alert("아이디 중복확인 API가 아직 준비되지 않았습니다.")}
-            className="px-4 bg-gray-100 hover:bg-gray-200 rounded-lg text-sm font-semibold whitespace-nowrap"
+            onClick={handleCheckId}
+            className={`px-4 rounded-lg text-sm font-semibold whitespace-nowrap transition ${
+              isIdChecked
+                ? "bg-green-100 text-green-700"
+                : "bg-gray-100 hover:bg-gray-200 text-gray-700"
+            }`}
           >
-            중복확인
+            {isIdChecked ? "확인완료" : "중복확인"}
           </button>
         </div>
 

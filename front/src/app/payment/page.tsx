@@ -59,8 +59,7 @@ export default function PaymentPage() {
       return;
     }
 
-    const decoded = decodeToken();
-    if (!decoded) {
+    if (!decodeToken()) {
       alert("로그인이 필요합니다.");
       router.push("/login");
       return;
@@ -69,7 +68,6 @@ export default function PaymentPage() {
     try {
       const res = await apiFetch<PaymentTicketResponse>("/tickets/reserve", {
         method: "POST",
-        headers: { userId: String(decoded.id) },
         body: JSON.stringify({
           concertId: Number(concertId),
           scheduleId: Number(scheduleId),

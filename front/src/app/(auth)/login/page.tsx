@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Eye, EyeOff } from "lucide-react";
-import { apiFetch, setAccessToken } from "@/lib/api";
+import { apiFetch } from "@/lib/api";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -27,14 +27,10 @@ export default function LoginPage() {
 
     setIsSubmitting(true);
     try {
-      const res = await apiFetch<{ accessToken: string; tokenType: string; expiresIn: number }>(
-        "/auth/login",
-        {
-          method: "POST",
-          body: JSON.stringify({ id: loginId, password }),
-        }
-      );
-      setAccessToken(res.data.accessToken);
+      await apiFetch("/auth/login", {
+        method: "POST",
+        body: JSON.stringify({ id: loginId, password }),
+      });
       router.push("/");
     } catch (err) {
       alert(err instanceof Error ? err.message : "로그인 중 오류가 발생했습니다.");
