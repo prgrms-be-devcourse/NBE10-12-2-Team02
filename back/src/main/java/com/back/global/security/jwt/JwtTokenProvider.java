@@ -111,4 +111,8 @@ public class JwtTokenProvider {
                 )
         );
     }
+
+    public int getAccessTokenExpireSeconds() {
+        return accessTokenExpireSeconds;
+    }
 }
