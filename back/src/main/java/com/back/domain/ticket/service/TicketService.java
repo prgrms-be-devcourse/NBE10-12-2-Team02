@@ -34,7 +34,7 @@ public class TicketService {
 
     @Transactional
     public PaymentTicketResponse createTicket(Long userId, PaymentTicketRequest request) {
-        User user = userRepository.findById(userId)
+        User user = userRepository.findByUserIdAndDeletedAtIsNull(userId)
                 .orElseThrow(() -> new ServiceException(ErrorCode.USER_NOT_FOUND));
 
         Schedule schedule = scheduleRepository
