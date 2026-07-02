@@ -32,8 +32,8 @@ public class UserController {
 
     @PatchMapping("/withdraw")
     @Operation(summary = "회원 탈퇴", description = "회원 탈퇴 API")
-    public RsData<Void> withdraw() {
-        userService.withdraw(requestContext.getActor().getId());
+    public RsData<Void> withdraw(@RequestHeader("Authorization") String authorization) {
+        userService.withdraw(requestContext.getActor().getId(), authorization);
         return new RsData<>("200-1", "회원 탈퇴가 정상적으로 완료되었습니다.", null);
     }
 
@@ -49,6 +49,7 @@ public class UserController {
         userService.updateMyPage(requestContext.getActor().getId(), request);
         return new RsData<>("200-1", "마이페이지 수정 성공", null);
     }
+
     @GetMapping("/check-id")
     @Operation(summary = "아이디 중복확인", description = "아이디 중복확인 API")
     public RsData<Void> checkId(@RequestParam String id) {
