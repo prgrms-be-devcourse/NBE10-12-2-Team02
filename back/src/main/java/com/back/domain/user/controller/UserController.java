@@ -35,8 +35,7 @@ public class UserController {
     public RsData<Void> withdraw(
             @AuthenticationPrincipal SecurityUser securityUser,
             @RequestHeader("Authorization") String authorization) {
-        String accessToken = authorization.replace("Bearer ", "");
-        userService.withdraw(securityUser.getId(), accessToken);
+        userService.withdraw(securityUser.getId(), authorization);
         return new RsData<>("200-1", "회원 탈퇴가 정상적으로 완료되었습니다.", null);
     }
 
