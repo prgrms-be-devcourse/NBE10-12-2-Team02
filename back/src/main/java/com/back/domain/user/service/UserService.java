@@ -47,12 +47,14 @@ public class UserService {
     }
 
     @Transactional
-    public void withdraw(Long userId, String accessToken) {
+    public void withdraw(Long userId, String authorization) {
+        String accessToken = authorization.replace("Bearer ", "");
         User user = userRepository.findByUserIdAndDeletedAtIsNull(userId)
                 .orElseThrow(() -> new ServiceException(ErrorCode.USER_NOT_FOUND_OR_DELETED));
         user.withdraw();
         refreshTokenRepository.deleteAllByUserId(userId);
-        blacklistRepository.add(accessToken, Duration.ofSeconds(jwtTokenProvider.getAccessTokenExpireSeconds()));
+        long remaining = jwtTokenProvider.getRemainingSeconds(accessToken);
+        blacklistRepository.add(accessToken, Duration.ofSeconds(remaining + 60));
     }
 
     public MyPageResponse getMyPage(Long userId) {
