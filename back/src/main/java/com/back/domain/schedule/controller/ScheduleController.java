@@ -1,5 +1,6 @@
 package com.back.domain.schedule.controller;
 
+import com.back.domain.schedule.dto.ShowScheduleListResponse;
 import com.back.domain.schedule.dto.ShowScheduleResponse;
 import com.back.domain.schedule.service.ScheduleService;
 import com.back.global.annotation.ApiV1;
@@ -22,9 +23,10 @@ public class ScheduleController {
 
     @GetMapping
     @Operation(summary = "콘서트 전체 회차 조회", description = "콘서트별 전체 회차 조회 API")
-    public RsData<List<ShowScheduleResponse>> showScheduleList(
+    public RsData<List<ShowScheduleListResponse>> showScheduleList(
             @RequestParam(value = "concertId") Long concertId) {
-        List<ShowScheduleResponse> response = scheduleService.showScheduleList(concertId);
+        List<ShowScheduleListResponse> response = scheduleService.showScheduleList(concertId);
+
         return new RsData<>(
                 "200-1",
                 "콘서트 전체 회차 조회 성공",

@@ -1,6 +1,7 @@
 package com.back.domain.schedule.service;
 
 import com.back.domain.concert.repository.ConcertRepository;
+import com.back.domain.schedule.dto.ShowScheduleListResponse;
 import com.back.domain.schedule.dto.ShowScheduleResponse;
 import com.back.domain.schedule.entity.Schedule;
 import com.back.domain.schedule.entity.SeatStatus;
@@ -22,7 +23,7 @@ public class ScheduleService {
     private final ConcertRepository concertRepository;
     private final ScheduleSeatRepository scheduleSeatRepository;
 
-    public ShowScheduleResponse showSchedule(Long concertId,Long scheduleId) {
+    public ShowScheduleResponse showSchedule(Long concertId, Long scheduleId) {
 
         Schedule schedule = scheduleRepository
                 .findByScheduleIdAndConcert_ConcertId(scheduleId, concertId)
@@ -31,17 +32,23 @@ public class ScheduleService {
         long remainingSeats = scheduleSeatRepository
                 .countBySchedule_ScheduleIdAndSeatStatus(scheduleId, SeatStatus.AVAILABLE);
 
-        return ShowScheduleResponse.from(schedule, remainingSeats);
+        return ShowScheduleResponse.of(schedule, remainingSeats);
     }
 
-    public List<ShowScheduleResponse> showScheduleList(Long concertId) {
-        return scheduleRepository.findByConcertConcertId(concertId).stream()
-                .map(schedule -> {
-                    long remainingSeats = scheduleSeatRepository
-                            .countBySchedule_ScheduleIdAndSeatStatus(schedule.getScheduleId(), SeatStatus.AVAILABLE);
-                    return ShowScheduleResponse.from(schedule, remainingSeats);
-                })
+    public List<ShowScheduleListResponse> showScheduleList(Long concertId) {
+
+        if (!concertRepository.existsById(concertId)) {
+            throw new ServiceException(ErrorCode.CONCERT_NOT_FOUND);
+        }
+
+        List<Schedule> schedules = scheduleRepository.findByConcertConcertId(concertId);
+
+        if (schedules.isEmpty()) {
+            throw new ServiceException(ErrorCode.CONCERT_SCHEDULE_EMPTY);
+        }
+
+        return schedules.stream()
+                .map(ShowScheduleListResponse::of)
                 .toList();
     }
-
 }

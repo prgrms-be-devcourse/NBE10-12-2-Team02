@@ -7,6 +7,8 @@ import lombok.RequiredArgsConstructor;
 @Getter
 @RequiredArgsConstructor
 public enum ErrorCode {
+    //global
+    BAD_REQUEST("400-4", "잘못된 요청입니다."),
     // Auth
     AUTH_ID_NOT_FOUND("401-1", "존재하지 않는 아이디입니다."),
     AUTH_PASSWORD_MISMATCH("401-2", "비밀번호가 일치하지 않습니다."),
@@ -24,6 +26,7 @@ public enum ErrorCode {
     USER_EMAIL_ALREADY_EXISTS("409-2", "이미 사용 중인 이메일입니다."),
     USER_ACCESS_DENIED("403-2", "본인의 정보만 조회할 수 있습니다."),
     USER_NOT_FOUND_OR_DELETED("404-2", "존재하지 않거나 이미 탈퇴한 회원입니다."),
+    USER_NAME_INVALID("400-6", "이름에 공백을 포함할 수 없습니다."),
 
     // Concert
     CONCERT_NOT_FOUND("404-3", "존재하지 않는 콘서트입니다."),
@@ -46,7 +49,9 @@ public enum ErrorCode {
 
     // Ticket
     TICKET_NOT_FOUND_FOR_USER("404-6", "해당 유저의 티켓이 존재하지 않습니다."),
-    TICKET_ALREADY_CANCELLED("400-3", "이미 취소된 티켓입니다.");
+    TICKET_ALREADY_CANCELLED("400-3", "이미 취소된 티켓입니다."),
+    // bucket4j
+    TOO_MANY_REQUESTS("429-1", "요청이 너무 많습니다.");
 
 
     private final String resultCode;

@@ -5,11 +5,12 @@ import com.back.domain.concert.enums.ConcertSortType;
 import com.back.domain.concert.service.ConcertService;
 import com.back.domain.concert.service.SeatOccupyManager;
 import com.back.global.annotation.ApiV1;
-import com.back.global.rq.Rq;
 import com.back.global.rsData.RsData;
+import com.back.global.security.SecurityUser;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -22,9 +23,9 @@ import java.util.List;
 public class ConcertController {
     private final ConcertService concertService;
     private final SeatOccupyManager seatOccupyManager;
-    private final Rq rq;
 
     @GetMapping
+    @Operation(summary = "콘서트 목록 조회", description = "콘서트 목록 조회 API")
     public RsData<List<ConcertListResponse>> getConcerts(
             @RequestParam(required = false) String keyword,
             @RequestParam(defaultValue = "closingSoon") ConcertSortType sort) {
@@ -34,6 +35,7 @@ public class ConcertController {
     }
 
     @GetMapping("/{concertId}")
+    @Operation(summary = "콘서트 상세 조회", description = "콘서트 상세 정보 조회 API")
     public RsData<ConcertDetailResponse> getConcertDetail(
             @PathVariable Long concertId) {
 
@@ -61,15 +63,14 @@ public class ConcertController {
     public RsData<SeatOccupyResponse> seatOccupy(
             @PathVariable Long concertId,
             @PathVariable Long scheduleId,
-            @RequestBody SeatOccupyRequest request) {
-
-        Long userId = rq.getActor().getUserId();
-
+            @RequestBody SeatOccupyRequest request,
+            @AuthenticationPrincipal SecurityUser securityUser
+    ) {
         SeatOccupyResponse response = seatOccupyManager.seatOccupy(
                 concertId,
                 scheduleId,
                 request.seatNumber(),
-                userId
+                securityUser.getId()
         );
 
         return new RsData<>(

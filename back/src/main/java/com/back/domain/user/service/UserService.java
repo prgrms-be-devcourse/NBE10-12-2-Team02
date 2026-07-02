@@ -1,10 +1,7 @@
 package com.back.domain.user.service;
 
 import com.back.domain.ticket.repository.TicketRepository;
-import com.back.domain.user.dto.MyPageResponse;
-import com.back.domain.user.dto.SignupRequest;
-import com.back.domain.user.dto.SignupResponse;
-import com.back.domain.user.dto.TicketInfo;
+import com.back.domain.user.dto.*;
 import com.back.domain.user.entity.LoginType;
 import com.back.domain.user.entity.User;
 import com.back.domain.user.repository.UserRepository;
@@ -42,11 +39,8 @@ public class UserService {
     }
 
     @Transactional
-    public void withdraw(Long pathUserId, Long loginUserId) {
-        if (!pathUserId.equals(loginUserId)) {
-            throw new ServiceException(ErrorCode.USER_ACCESS_DENIED);
-        }
-        User user = userRepository.findByUserIdAndDeletedAtIsNull(pathUserId)
+    public void withdraw(Long userId) {
+        User user = userRepository.findByUserIdAndDeletedAtIsNull(userId)
                 .orElseThrow(() -> new ServiceException(ErrorCode.USER_NOT_FOUND_OR_DELETED));
         user.withdraw();
     }
@@ -61,5 +55,35 @@ public class UserService {
                 .toList();
 
         return MyPageResponse.from(user, ticketList);
+    }
+    @Transactional
+    public void updateMyPage(Long userId, UpdateMyPageRequest request) {
+        User user = userRepository.findByUserIdAndDeletedAtIsNull(userId)
+                .orElseThrow(() -> new ServiceException(ErrorCode.USER_NOT_FOUND));
+
+        if (request.name() != null) {
+            String trimmed = request.name().trim();
+            if (trimmed.isEmpty() || trimmed.contains(" ")) {
+                throw new ServiceException(ErrorCode.USER_NAME_INVALID);
+            }
+            user.updateName(trimmed);
+        }
+
+        if (request.email() != null) {
+            if (!user.getEmail().equals(request.email())
+                    && userRepository.existsByEmailAndDeletedAtIsNull(request.email())) {
+                throw new ServiceException(ErrorCode.USER_EMAIL_ALREADY_EXISTS);
+            }
+            user.updateEmail(request.email());
+        }
+        if (request.password() != null) {
+            user.updatePassword(passwordEncoder.encode(request.password()));
+        }
+    }
+
+    public void checkId(String id) {
+        if (userRepository.existsByIdAndDeletedAtIsNull(id)) {
+            throw new ServiceException(ErrorCode.USER_ID_ALREADY_EXISTS);
+        }
     }
 }

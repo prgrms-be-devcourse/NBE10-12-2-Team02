@@ -1,4 +1,4 @@
-package com.back.global.rq;
+package com.back.global.requestcontext;
 
 import com.back.domain.user.entity.User;
 import com.back.global.security.SecurityUser;
@@ -15,22 +15,9 @@ import java.util.Optional;
 
 @Component
 @RequiredArgsConstructor
-public class Rq {
+public class RequestContext {
     private final HttpServletRequest req;
     private final HttpServletResponse resp;
-
-    public User getActor() {
-        return Optional.ofNullable(
-                        SecurityContextHolder
-                                .getContext()
-                                .getAuthentication()
-                )
-                .map(Authentication::getPrincipal)
-                .filter(principal -> principal instanceof SecurityUser)
-                .map(principal -> (SecurityUser) principal)
-                .map(securityUser -> User.create(securityUser.getId(), securityUser.getName()))
-                .orElse(null);
-    }
 
     public String getHeader(String name, String defaultValue) {
         return Optional
@@ -58,11 +45,11 @@ public class Rq {
                 .orElse(defaultValue);
     }
 
-    public void setCookie(String name, String value) {
+    public void setCookie(String name, String value, String path) {
         if (value == null) value = "";
 
         Cookie cookie = new Cookie(name, value);
-        cookie.setPath("/");
+        cookie.setPath(path);
         cookie.setHttpOnly(true);
         cookie.setSecure(false); // localhost 테스트
         cookie.setAttribute("SameSite", "Lax");
@@ -73,7 +60,7 @@ public class Rq {
         resp.addCookie(cookie);
     }
 
-    public void deleteCookie(String name) {
-        setCookie(name, null);
+    public void deleteCookie(String name, String path) {
+        setCookie(name, null, path);
     }
 }
