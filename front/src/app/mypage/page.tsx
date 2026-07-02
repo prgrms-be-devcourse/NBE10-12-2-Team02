@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { apiFetch, decodeToken } from "@/lib/api";
+import { apiFetch, decodeToken, setAccessToken } from "@/lib/api";
 
 interface TicketInfo {
   ticketId: number;
@@ -26,7 +26,6 @@ interface MyPageData {
 
 export default function MyPage() {
   const router = useRouter();
-  const decoded = decodeToken();
 
   const [data, setData] = useState<MyPageData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -36,13 +35,13 @@ export default function MyPage() {
   const ticketsPerPage = 5;
 
   useEffect(() => {
-    if (!decoded) {
+    if (!decodeToken()) {
       alert("로그인이 필요합니다.");
       router.push("/login");
       return;
     }
 
-    apiFetch<MyPageData>(`/users/me/${decoded.id}`)
+    apiFetch<MyPageData>(`/users/me`)
       .then((res) => setData(res.data))
       .catch((e) => alert(e instanceof Error ? e.message : "마이페이지 조회에 실패했습니다."))
       .finally(() => setLoading(false));
@@ -50,12 +49,9 @@ export default function MyPage() {
   }, []);
 
   const handleWithdraw = async () => {
-    if (!decoded) return;
     try {
-      await apiFetch(`/users/${decoded.id}`, {
-        method: "PATCH",
-        headers: { "X-Impersonate-User-Id": String(decoded.id) },
-      });
+      await apiFetch(`/users/withdraw`, { method: "PATCH" });
+      setAccessToken(null);
       alert("회원 탈퇴가 완료되었습니다.");
       router.push("/");
     } catch (e) {
@@ -66,12 +62,9 @@ export default function MyPage() {
   };
 
   const handleCancel = async () => {
-    if (cancelTargetId === null || !decoded) return;
+    if (cancelTargetId === null) return;
     try {
-      await apiFetch(`/tickets/cancel/${cancelTargetId}`, {
-        method: "PATCH",
-        headers: { userId: String(decoded.id) },
-      });
+      await apiFetch(`/tickets/cancel/${cancelTargetId}`, { method: "PATCH" });
       setData((prev) =>
         prev
           ? {
