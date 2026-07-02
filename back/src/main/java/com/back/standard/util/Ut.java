@@ -44,18 +44,13 @@ public class Ut {
 
         public static Map<String, Object> payload(String secret, String jwtStr) {
             SecretKey secretKey = Keys.hmacShaKeyFor(secret.getBytes());
-
-            try {
-                return new LinkedHashMap<>(
-                        Jwts.parser()
-                                .verifyWith(secretKey)
-                                .build()
-                                .parseSignedClaims(jwtStr)
-                                .getPayload()
-                );
-            } catch (Exception e) {
-                return null;
-            }
+            return new LinkedHashMap<>(
+                    Jwts.parser()
+                            .verifyWith(secretKey)
+                            .build()
+                            .parseSignedClaims(jwtStr)
+                            .getPayload()
+            );
         }
     }
 
