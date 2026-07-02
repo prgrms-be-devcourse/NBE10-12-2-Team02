@@ -1,7 +1,6 @@
 package com.back.domain.schedule.service;
 
 import com.back.domain.concert.repository.ConcertRepository;
-import com.back.domain.schedule.dto.ShowScheduleListResponse;
 import com.back.domain.schedule.dto.ShowScheduleResponse;
 import com.back.domain.schedule.entity.Schedule;
 import com.back.domain.schedule.entity.SeatStatus;
@@ -35,9 +34,13 @@ public class ScheduleService {
         return ShowScheduleResponse.from(schedule, remainingSeats);
     }
 
-    public List<ShowScheduleListResponse> showScheduleList(Long concertId) {
+    public List<ShowScheduleResponse> showScheduleList(Long concertId) {
         return scheduleRepository.findByConcertConcertId(concertId).stream()
-                .map(ShowScheduleListResponse::of)
+                .map(schedule -> {
+                    long remainingSeats = scheduleSeatRepository
+                            .countBySchedule_ScheduleIdAndSeatStatus(schedule.getScheduleId(), SeatStatus.AVAILABLE);
+                    return ShowScheduleResponse.from(schedule, remainingSeats);
+                })
                 .toList();
     }
 
