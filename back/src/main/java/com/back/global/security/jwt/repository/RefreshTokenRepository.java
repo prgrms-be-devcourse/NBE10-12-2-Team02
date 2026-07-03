@@ -1,5 +1,7 @@
 package com.back.global.security.jwt.repository;
 
+import com.back.global.exception.ErrorCode;
+import com.back.global.exception.ServiceException;
 import com.back.global.security.jwt.RefreshTokenKeyType;
 import com.back.global.security.jwt.RefreshTokenLuaScripts;
 import com.back.global.security.jwt.RefreshTokenRotateResult;
@@ -45,11 +47,15 @@ public class RefreshTokenRepository {
                 newJti
         );
 
+        if (result == null) {
+            throw new ServiceException(ErrorCode.AUTH_REFRESH_TOKEN_ROTATION_FAILED);
+        }
+
         return switch (Math.toIntExact(result)) {
             case 1 -> RefreshTokenRotateResult.SUCCESS;
             case -1 -> RefreshTokenRotateResult.MISMATCH;
             case 0 -> RefreshTokenRotateResult.NOT_FOUND;
-            default -> throw new IllegalStateException("Refresh token rotation failed");
+            default -> throw new ServiceException(ErrorCode.AUTH_REFRESH_TOKEN_ROTATION_FAILED);
         };
     }
 

@@ -8,7 +8,7 @@ import com.back.global.security.auth.SecurityAuthenticationFactory;
 import com.back.global.security.jwt.repository.BlacklistRepository;
 import com.back.global.security.jwt.JwtTokenProvider;
 import com.back.global.security.jwt.payload.AccessTokenPayload;
-import com.back.domain.auth.util.Ut;
+import com.back.global.util.Ut;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;

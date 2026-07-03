@@ -116,6 +116,7 @@ public class AuthService {
             refreshTokenRepository.delete(payload.userId(), payload.jti());
         }
     }
+
     private void blacklistAccessTokenIfValid(String authorization) {
         String accessToken = bearerTokenExtractor.extractAccessTokenOrNull(authorization);
 
