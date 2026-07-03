@@ -3,9 +3,9 @@ package com.back.domain.auth.controller;
 import com.back.domain.user.entity.LoginType;
 import com.back.domain.user.entity.User;
 import com.back.domain.user.repository.UserRepository;
+import com.back.global.security.jwt.RefreshTokenRotateResult;
 import com.back.global.security.jwt.repository.BlacklistRepository;
 import com.back.global.security.jwt.repository.RefreshTokenRepository;
-import com.back.global.security.jwt.TokenHashUtil;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.Cookie;
 import org.junit.jupiter.api.BeforeEach;
@@ -118,8 +118,14 @@ class AuthControllerTest {
     void t3() throws Exception {
         Cookie refreshTokenCookie = loginAndGetRefreshTokenCookie();
 
-        when(refreshTokenRepository.find(anyLong(), anyString()))
-                .thenReturn(TokenHashUtil.sha256(refreshTokenCookie.getValue()));
+        when(refreshTokenRepository.rotate(
+                anyLong(),
+                anyString(),
+                anyString(),
+                anyString(),
+                anyString(),
+                any(Duration.class)
+        )).thenReturn(RefreshTokenRotateResult.SUCCESS);
 
         mockMvc.perform(post("/api/v1/auth/refresh")
                         .cookie(refreshTokenCookie))
