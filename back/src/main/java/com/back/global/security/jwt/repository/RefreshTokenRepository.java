@@ -61,17 +61,6 @@ public class RefreshTokenRepository {
         redisTemplate.expire(indexKey, ttl);
     }
 
-    public String find(Long userId, String jti) {
-        String key = getKey(userId, jti);
-        String value = redisTemplate.opsForValue().get(key);
-
-        if (value == null) {
-            redisTemplate.opsForSet().remove(getIndexKey(userId), jti);
-        }
-
-        return value;
-    }
-
     public void delete(Long userId, String jti) {
         redisTemplate.delete(getKey(userId, jti));
         redisTemplate.opsForSet().remove(getIndexKey(userId), jti);
