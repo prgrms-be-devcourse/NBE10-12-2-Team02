@@ -7,6 +7,7 @@ import com.back.domain.user.entity.User;
 import com.back.domain.user.repository.UserRepository;
 import com.back.global.exception.ErrorCode;
 import com.back.global.exception.ServiceException;
+import com.back.global.security.filter.BearerTokenExtractor;
 import com.back.global.security.jwt.BlacklistRepository;
 import com.back.global.security.jwt.JwtTokenProvider;
 import com.back.global.security.jwt.RefreshTokenRepository;
@@ -29,10 +30,13 @@ public class UserService {
     private final RefreshTokenRepository refreshTokenRepository;
     private final BlacklistRepository blacklistRepository;
     private final JwtTokenProvider jwtTokenProvider;
+    private final BearerTokenExtractor bearerTokenExtractor;
+
+    private static final long TOKEN_BLACKLIST_GRACE_SECONDS = 60;
 
     @Transactional
     public SignupResponse signup(SignupRequest request) {
-        if (userRepository.existsByIdAndDeletedAtIsNull(request.id())) {
+        if (userRepository.existsByLoginIdAndDeletedAtIsNull(request.id())) {
             throw new ServiceException(ErrorCode.USER_ID_ALREADY_EXISTS);
         }
         if (userRepository.existsByEmailAndDeletedAtIsNull(request.email())) {
@@ -48,13 +52,13 @@ public class UserService {
 
     @Transactional
     public void withdraw(Long userId, String authorization) {
-        String accessToken = authorization.replace("Bearer ", "");
+        String accessToken = bearerTokenExtractor.extract(authorization);
         User user = userRepository.findByUserIdAndDeletedAtIsNull(userId)
                 .orElseThrow(() -> new ServiceException(ErrorCode.USER_NOT_FOUND_OR_DELETED));
         user.withdraw();
         refreshTokenRepository.deleteAllByUserId(userId);
         long remaining = jwtTokenProvider.getRemainingSeconds(accessToken);
-        blacklistRepository.add(accessToken, Duration.ofSeconds(remaining + 60));
+        blacklistRepository.add(accessToken, Duration.ofSeconds(remaining + TOKEN_BLACKLIST_GRACE_SECONDS));
     }
 
     public MyPageResponse getMyPage(Long userId) {
@@ -68,6 +72,7 @@ public class UserService {
 
         return MyPageResponse.from(user, ticketList);
     }
+
     @Transactional
     public void updateMyPage(Long userId, UpdateMyPageRequest request) {
         User user = userRepository.findByUserIdAndDeletedAtIsNull(userId)
@@ -88,13 +93,14 @@ public class UserService {
             }
             user.updateEmail(request.email());
         }
+
         if (request.password() != null) {
             user.updatePassword(passwordEncoder.encode(request.password()));
         }
     }
 
     public void checkId(String id) {
-        if (userRepository.existsByIdAndDeletedAtIsNull(id)) {
+        if (userRepository.existsByLoginIdAndDeletedAtIsNull(id)) {
             throw new ServiceException(ErrorCode.USER_ID_ALREADY_EXISTS);
         }
     }
