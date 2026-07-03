@@ -12,6 +12,7 @@ import com.back.global.security.jwt.BlacklistRepository;
 import com.back.global.security.jwt.JwtTokenProvider;
 import com.back.global.security.jwt.RefreshTokenRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -32,7 +33,8 @@ public class UserService {
     private final JwtTokenProvider jwtTokenProvider;
     private final BearerTokenExtractor bearerTokenExtractor;
 
-    private static final long TOKEN_BLACKLIST_GRACE_SECONDS = 60;
+    @Value("${custom.jwt.blacklist.grace-seconds}")
+    private long tokenBlacklistGraceSeconds;
 
     @Transactional
     public SignupResponse signup(SignupRequest request) {
@@ -58,7 +60,7 @@ public class UserService {
         user.withdraw();
         refreshTokenRepository.deleteAllByUserId(userId);
         long remaining = jwtTokenProvider.getRemainingSeconds(accessToken);
-        blacklistRepository.add(accessToken, Duration.ofSeconds(remaining + TOKEN_BLACKLIST_GRACE_SECONDS));
+        blacklistRepository.add(accessToken, Duration.ofSeconds(remaining + tokenBlacklistGraceSeconds));
     }
 
     public MyPageResponse getMyPage(Long userId) {
