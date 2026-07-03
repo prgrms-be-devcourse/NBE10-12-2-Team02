@@ -58,16 +58,14 @@ public class ConcertController {
         );
     }
 
-    @PostMapping("/{concertId}/schedules/{scheduleId}/seats/occupy")
+    @PostMapping("/seats/occupy")
     @Operation(summary = "Redis 실시간 좌석 선점 요청", description = "Redis 실시간 좌석 선점 요청 API")
     public RsData<SeatOccupyResponse> seatOccupy(
-            @PathVariable Long concertId,
-            @PathVariable Long scheduleId,
             @RequestBody SeatOccupyRequest request
     ) {
         SeatOccupyResponse response = seatOccupyManager.seatOccupy(
-                concertId,
-                scheduleId,
+                request.concertId(),
+                request.scheduleId(),
                 request.seatNumber(),
                 requestContext.getActor().getId()
         );

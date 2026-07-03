@@ -155,18 +155,20 @@ class ConcertControllerTest {
         when(redisTemplate.execute(
                 any(org.springframework.data.redis.core.script.RedisScript.class),
                 anyList(),
-                any(),
-                any(),
-                any()
+                any(Object.class),
+                any(Object.class),
+                any(Object.class)
         )).thenReturn(1L);
 
-        String requestBody = """
+        String requestBody = String.format("""
                 {
+                  "concertId": %d,
+                  "scheduleId": %d,
                   "seatNumber": "A-1"
                 }
-                """;
+                """, concert.getConcertId(), schedule.getScheduleId());
 
-        mockMvc.perform(post("/api/v1/concerts/{concertId}/schedules/{scheduleId}/seats/occupy", concert.getConcertId(), schedule.getScheduleId())
+        mockMvc.perform(post("/api/v1/concerts/seats/occupy")
                         .with(user(new SecurityUser(1L, "테스트유저")))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(requestBody))

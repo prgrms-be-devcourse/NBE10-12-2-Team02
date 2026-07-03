@@ -14,14 +14,19 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.context.TestConfiguration;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Primary;
+import org.springframework.data.redis.connection.RedisConnectionFactory;
+import org.springframework.data.redis.connection.lettuce.LettuceConnectionFactory;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.script.RedisScript;
 import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
+import jakarta.annotation.PreDestroy;
+import redis.embedded.RedisServer;
 
 import java.time.LocalDateTime;
-import java.util.List;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -46,14 +51,12 @@ class ConcertServiceTest {
     @Autowired
     private ScheduleSeatRepository scheduleSeatRepository;
 
-    @MockitoBean
+    @MockitoSpyBean
     private StringRedisTemplate redisTemplate;
 
     private Concert concert;
     private Schedule schedule;
     private ScheduleSeat seat;
-
-    private final ConcurrentHashMap<String, String> localStore = new ConcurrentHashMap<>();
 
     @BeforeEach
     void setUp() {
@@ -61,22 +64,26 @@ class ConcertServiceTest {
         scheduleRepository.deleteAll();
         concertRepository.deleteAll();
         venueRepository.deleteAll();
-        localStore.clear();
 
         concert = concertRepository.save(Concert.create("아이유 콘서트", "설명", LocalDateTime.now(), LocalDateTime.now().plusDays(1), "poster.jpg"));
         Venue venue = venueRepository.save(Venue.create("올림픽체조경기장", "서울", 15000L));
         schedule = scheduleRepository.save(Schedule.create(concert, venue, LocalDateTime.now().plusHours(12), 1));
-        seat = scheduleSeatRepository.save(ScheduleSeat.create(schedule, "VIP", "A-1", 150000, SeatStatus.AVAILABLE));
+
+        for (int i = 1; i <= 300; i++) {
+            ScheduleSeat createdSeat = scheduleSeatRepository.save(ScheduleSeat.create(schedule, "VIP", "A-" + i, 150000, SeatStatus.AVAILABLE));
+            if (i == 1) {
+                this.seat = createdSeat;
+            }
+        }
+
+        java.util.Set<String> keys = redisTemplate.keys("seat:occupy:" + concert.getConcertId() + ":" + schedule.getScheduleId() + ":*");
+        if (keys != null && !keys.isEmpty()) {
+            redisTemplate.delete(keys);
+        }
 
         doAnswer(invocation -> {
-            List<String> keys = invocation.getArgument(1);
-            String key = keys.get(0);
-            String userId = invocation.getArgument(2).toString();
-
-            if (localStore.putIfAbsent(key, userId) == null) {
-                return 1L;
-            }
-            return 0L;
+            Thread.sleep(500);
+            return invocation.callRealMethod();
         }).when(redisTemplate).execute(
                 any(RedisScript.class),
                 anyList(),
@@ -89,11 +96,14 @@ class ConcertServiceTest {
     @Test
     @DisplayName("실시간 좌석 선점 동시성 테스트")
     void seatOccupy() throws InterruptedException {
-        int threadCount = 10;
+        int threadCount = 1000;
         CountDownLatch startLatch = new CountDownLatch(1);
         CountDownLatch doneLatch = new CountDownLatch(threadCount);
         AtomicInteger successCount = new AtomicInteger(0);
         AtomicInteger failCount = new AtomicInteger(0);
+        AtomicInteger connectionTimeoutCount = new AtomicInteger(0);
+
+        long startTime = System.currentTimeMillis();
 
         try (ExecutorService executorService = Executors.newFixedThreadPool(threadCount)) {
             for (int i = 0; i < threadCount; i++) {
@@ -109,6 +119,28 @@ class ConcertServiceTest {
                         );
                         successCount.incrementAndGet();
                     } catch (Exception e) {
+                        String errName = e.getClass().getSimpleName();
+                        String errMsg = e.getMessage() != null ? e.getMessage() : "";
+                        Throwable cause = e.getCause();
+                        String causeName = cause != null ? cause.getClass().getSimpleName() : "";
+                        String causeMsg = cause != null && cause.getMessage() != null ? cause.getMessage() : "";
+
+                        boolean isConnectionTimeout = errName.contains("Connection") ||
+                                                     errName.contains("Timeout") ||
+                                                     errName.contains("CannotCreateTransaction") ||
+                                                     causeName.contains("Connection") ||
+                                                     causeName.contains("Timeout") ||
+                                                     errMsg.contains("HikariPool") ||
+                                                     causeMsg.contains("HikariPool");
+
+                        if (isConnectionTimeout) {
+                            connectionTimeoutCount.incrementAndGet();
+                        }
+
+                        System.err.println(" 예외 발생 원인: " + errName + " - " + errMsg);
+                        if (cause != null) {
+                            System.err.println("   └─ 상세 원인: " + causeName + " - " + causeMsg);
+                        }
                         failCount.incrementAndGet();
                     } finally {
                         doneLatch.countDown();
@@ -119,10 +151,76 @@ class ConcertServiceTest {
             doneLatch.await();
         }
 
+        long endTime = System.currentTimeMillis();
+        System.out.println(">>> [성능 리포트] 총 소요 시간: " + (endTime - startTime) + " ms");
+        System.out.println(">>> [성능 리포트] 커넥션 고갈(타임아웃) 예외 수: " + connectionTimeoutCount.get() + " / " + threadCount);
+
+        assertThat(connectionTimeoutCount.get())
+                .as("커넥션 고갈(타임아웃) 예외가 0개여야 합니다.")
+                .isEqualTo(0);
+
         assertThat(successCount.get()).isEqualTo(1);
         assertThat(failCount.get()).isEqualTo(threadCount - 1);
 
         ScheduleSeat updatedSeat = scheduleSeatRepository.findById(seat.getConcertSeatPriceId()).orElseThrow();
         assertThat(updatedSeat.getSeatStatus()).isEqualTo(SeatStatus.AVAILABLE);
+    }
+
+    @Test
+    @DisplayName("파이프라이닝 성능 측정 테스트")
+    void pipeliningBenchmark() {
+        int requestCount = 300;
+
+        long startTime = System.currentTimeMillis();
+        for (int i = 0; i < requestCount; i++) {
+            seatOccupyManager.getSeatSelection(concert.getConcertId(), schedule.getScheduleId());
+        }
+        long endTime = System.currentTimeMillis();
+
+        System.out.println(">>> [파이프라이닝 성능 리포트] 300회 조회 총 소요 시간: " + (endTime - startTime) + " ms");
+    }
+
+    @TestConfiguration
+    public static class RedisTestConfig {
+        private static RedisServer redisServer;
+        private static int redisPort;
+
+        private static int findFreePort() {
+            try (java.net.ServerSocket socket = new java.net.ServerSocket(0)) {
+                return socket.getLocalPort();
+            } catch (Exception e) {
+                return 6379;
+            }
+        }
+
+        @Bean
+        @Primary
+        public RedisConnectionFactory redisConnectionFactory() {
+            try {
+                if (redisServer == null) {
+                    redisPort = findFreePort();
+                    redisServer = new RedisServer(redisPort);
+                    redisServer.start();
+                }
+            } catch (Exception e) {
+                throw new RuntimeException("내장 레디스 구동 실패", e);
+            }
+            LettuceConnectionFactory factory = new LettuceConnectionFactory("127.0.0.1", redisPort);
+            factory.afterPropertiesSet();
+            return factory;
+        }
+
+        @Bean
+        @Primary
+        public StringRedisTemplate stringRedisTemplate(RedisConnectionFactory connectionFactory) {
+            return new StringRedisTemplate(connectionFactory);
+        }
+
+        @PreDestroy
+        public void stopRedis() throws java.io.IOException {
+            if (redisServer != null) {
+                redisServer.stop();
+            }
+        }
     }
 }
