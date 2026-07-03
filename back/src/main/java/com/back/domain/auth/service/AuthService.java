@@ -56,22 +56,8 @@ public class AuthService {
     }
 
     public void logout(String refreshToken, String authorization) {
-        RefreshTokenPayload payload = jwtTokenProvider.parseRefreshToken(refreshToken);
-        if (payload != null) {
-            refreshTokenRepository.delete(payload.userId(), payload.jti());
-        }
-
-        String accessToken = bearerTokenExtractor.extractAccessTokenOrNull(authorization);
-        if (accessToken != null) {
-            try {
-                long remaining = jwtTokenProvider.getRemainingSeconds(accessToken);
-
-                if (remaining > 0) {
-                    blacklistRepository.add(accessToken, Duration.ofSeconds(remaining + 60));
-                }
-            } catch (RuntimeException ignored) {
-            }
-        }
+        deleteRefreshTokenIfValid(refreshToken);
+        blacklistAccessTokenIfValid(authorization);
     }
 
     public TokenResponse refresh(String refreshToken) {
@@ -92,11 +78,7 @@ public class AuthService {
         String newRefreshToken = jwtTokenProvider.createRefreshToken(user, newJti);
         String newRefreshTokenHash = TokenHashUtil.sha256(newRefreshToken);
 
-<<<<<<< HEAD
-        RefreshTokenRotateResult rotateResult = refreshTokenRepository.rotate(
-=======
         RefreshTokenRotateResult rotateResult= refreshTokenRepository.rotate(
->>>>>>> 0beb93a (Refactor: RefreshTokenRepository 내용을 파일별로 분리 #94)
                 payload.userId(),
                 payload.jti(),
                 requestRefreshTokenHash,
@@ -105,20 +87,18 @@ public class AuthService {
                 Duration.ofSeconds(refreshTokenExpireSeconds)
         );
 
-<<<<<<< HEAD
-=======
-        refreshTokenRepository.delete(payload.userId(), payload.jti());
+        handleRotateFailure(rotateResult, payload.userId());
 
-        refreshTokenRepository.save(
-                payload.userId(),
-                newJti,
-                TokenHashUtil.sha256(newRefreshToken),
-                Duration.ofSeconds(refreshTokenExpireSeconds)
-        );
+        return new TokenResponse(newAccessToken, newRefreshToken);
+    }
 
->>>>>>> 0beb93a (Refactor: RefreshTokenRepository 내용을 파일별로 분리 #94)
+    private void handleRotateFailure(RefreshTokenRotateResult rotateResult, Long userId) {
+        if (rotateResult == RefreshTokenRotateResult.SUCCESS) {
+            return;
+        }
+
         if (rotateResult == RefreshTokenRotateResult.MISMATCH) {
-            refreshTokenRepository.deleteAllByUserId(payload.userId());
+            refreshTokenRepository.deleteAllByUserId(userId);
             throw new ServiceException(ErrorCode.AUTH_REFRESH_TOKEN_MISMATCH);
         }
 
@@ -126,6 +106,30 @@ public class AuthService {
             throw new ServiceException(ErrorCode.AUTH_INVALID_REFRESH_TOKEN);
         }
 
-        return new TokenResponse(newAccessToken, newRefreshToken);
+        throw new ServiceException(ErrorCode.AUTH_INVALID_REFRESH_TOKEN);
+    }
+
+    private void deleteRefreshTokenIfValid(String refreshToken) {
+        RefreshTokenPayload payload = jwtTokenProvider.parseRefreshToken(refreshToken);
+
+        if (payload != null) {
+            refreshTokenRepository.delete(payload.userId(), payload.jti());
+        }
+    }
+    private void blacklistAccessTokenIfValid(String authorization) {
+        String accessToken = bearerTokenExtractor.extractAccessTokenOrNull(authorization);
+
+        if (accessToken == null) {
+            return;
+        }
+
+        try {
+            long remaining = jwtTokenProvider.getRemainingSeconds(accessToken);
+
+            if (remaining > 0) {
+                blacklistRepository.add(accessToken, Duration.ofSeconds(remaining + 60));
+            }
+        } catch (RuntimeException ignored) {
+        }
     }
 }
