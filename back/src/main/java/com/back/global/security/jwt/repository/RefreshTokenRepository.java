@@ -3,6 +3,7 @@ package com.back.global.security.jwt.repository;
 import com.back.global.security.jwt.RefreshTokenLuaScripts;
 import com.back.global.security.jwt.RefreshTokenRotateResult;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Repository;
 
@@ -15,8 +16,11 @@ import java.util.Set;
 public class RefreshTokenRepository {
     private final StringRedisTemplate redisTemplate;
 
-    private static final String PREFIX = "auth:refresh:";
-    private static final String INDEX_PREFIX = "auth:refresh-index:";
+    @Value("${custom.redis.refresh-token.prefix}")
+    private String prefix;
+
+    @Value("${custom.redis.refresh-token.index-prefix}")
+    private String indexPrefix;
 
     public RefreshTokenRotateResult rotate(
             Long userId,
@@ -90,10 +94,10 @@ public class RefreshTokenRepository {
     }
 
     private String getIndexKey(Long userId) {
-        return INDEX_PREFIX + userId;
+        return indexPrefix + userId;
     }
 
     private String getKey(Long userId, String jti) {
-        return PREFIX + userId + ":" + jti;
+        return prefix + userId + ":" + jti;
     }
 }
