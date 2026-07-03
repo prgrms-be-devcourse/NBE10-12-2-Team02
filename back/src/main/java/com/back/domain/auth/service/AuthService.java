@@ -92,7 +92,11 @@ public class AuthService {
         String newRefreshToken = jwtTokenProvider.createRefreshToken(user, newJti);
         String newRefreshTokenHash = TokenHashUtil.sha256(newRefreshToken);
 
+<<<<<<< HEAD
         RefreshTokenRotateResult rotateResult = refreshTokenRepository.rotate(
+=======
+        RefreshTokenRotateResult rotateResult= refreshTokenRepository.rotate(
+>>>>>>> 0beb93a (Refactor: RefreshTokenRepository 내용을 파일별로 분리 #94)
                 payload.userId(),
                 payload.jti(),
                 requestRefreshTokenHash,
@@ -101,6 +105,18 @@ public class AuthService {
                 Duration.ofSeconds(refreshTokenExpireSeconds)
         );
 
+<<<<<<< HEAD
+=======
+        refreshTokenRepository.delete(payload.userId(), payload.jti());
+
+        refreshTokenRepository.save(
+                payload.userId(),
+                newJti,
+                TokenHashUtil.sha256(newRefreshToken),
+                Duration.ofSeconds(refreshTokenExpireSeconds)
+        );
+
+>>>>>>> 0beb93a (Refactor: RefreshTokenRepository 내용을 파일별로 분리 #94)
         if (rotateResult == RefreshTokenRotateResult.MISMATCH) {
             refreshTokenRepository.deleteAllByUserId(payload.userId());
             throw new ServiceException(ErrorCode.AUTH_REFRESH_TOKEN_MISMATCH);
