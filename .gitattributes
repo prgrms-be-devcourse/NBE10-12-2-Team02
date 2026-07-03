@@ -7,3 +7,10 @@
 
 # 3. 바이너리 파일 제외
 *.jar binary
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.webp binary
+*.gif binary
+*.ico binary
+*.pdf binary
