@@ -101,15 +101,6 @@ public class AuthService {
                 Duration.ofSeconds(refreshTokenExpireSeconds)
         );
 
-        refreshTokenRepository.delete(payload.userId(), payload.jti());
-
-        refreshTokenRepository.save(
-                payload.userId(),
-                newJti,
-                TokenHashUtil.sha256(newRefreshToken),
-                Duration.ofSeconds(refreshTokenExpireSeconds)
-        );
-
         if (rotateResult == RefreshTokenRotateResult.MISMATCH) {
             refreshTokenRepository.deleteAllByUserId(payload.userId());
             throw new ServiceException(ErrorCode.AUTH_REFRESH_TOKEN_MISMATCH);
