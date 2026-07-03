@@ -92,7 +92,7 @@ public class AuthService {
         String newRefreshToken = jwtTokenProvider.createRefreshToken(user, newJti);
         String newRefreshTokenHash = TokenHashUtil.sha256(newRefreshToken);
 
-        RefreshTokenRotateResult rotateResult= refreshTokenRepository.rotate(
+        RefreshTokenRotateResult rotateResult = refreshTokenRepository.rotate(
                 payload.userId(),
                 payload.jti(),
                 requestRefreshTokenHash,
