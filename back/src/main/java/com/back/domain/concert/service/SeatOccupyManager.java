@@ -84,7 +84,6 @@ public class SeatOccupyManager {
         redisTemplate.delete(redisKey);
     }
 
-
     public SeatSelectionResponse getSeatSelection(Long concertId, Long scheduleId) {
         concertService.validateConcertScheduleMatch(concertId, scheduleId);
         List<ScheduleSeat> seats = concertService.getScheduleSeats(scheduleId);

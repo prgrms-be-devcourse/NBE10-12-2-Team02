@@ -77,7 +77,7 @@ public class ConcertController {
         );
     }
 
-    @DeleteMapping("seats/occupy")
+    @DeleteMapping("/seats/occupy")
     @Operation(summary = "Redis 실시간 좌석 선점 취소", description = "Redis 실시간 좌석 선점 취소 API")
     public RsData<Void> seatOccupyCancel(
             @RequestBody SeatOccupyRequest request
