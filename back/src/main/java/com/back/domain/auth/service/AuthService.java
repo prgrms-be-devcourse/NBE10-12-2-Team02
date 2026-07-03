@@ -82,29 +82,27 @@ public class AuthService {
             throw new ServiceException(ErrorCode.AUTH_INVALID_REFRESH_TOKEN);
         };
 
-        String savedRefreshTokenHash = refreshTokenRepository.find(payload.userId(), payload.jti());
-
-        if (savedRefreshTokenHash == null) { // 구 리프레시 토큰 재사용의 경우
-            refreshTokenRepository.deleteAllByUserId(payload.userId());
-            throw new ServiceException(ErrorCode.AUTH_INVALID_REFRESH_TOKEN);
-        }
-
-        String requestRefreshTokenHash = TokenHashUtil.sha256(refreshToken);
-
-        if (!savedRefreshTokenHash.equals(requestRefreshTokenHash)) {
-            refreshTokenRepository.deleteAllByUserId(payload.userId());
-            throw new ServiceException(ErrorCode.AUTH_REFRESH_TOKEN_MISMATCH);
-        }
-
-        refreshTokenRepository.delete(payload.userId(), payload.jti());
-
         User user = userRepository.findByUserIdAndDeletedAtIsNull(payload.userId())
                 .orElseThrow(() -> new ServiceException(ErrorCode.USER_NOT_FOUND));
+
+        String requestRefreshTokenHash = TokenHashUtil.sha256(refreshToken);
 
         String newAccessToken = jwtTokenProvider.createAccessToken(user);
 
         String newJti = UUID.randomUUID().toString();
         String newRefreshToken = jwtTokenProvider.createRefreshToken(user, newJti);
+        String newRefreshTokenHash = TokenHashUtil.sha256(newRefreshToken);
+
+        RefreshTokenRepository.RotateResult rotateResult = refreshTokenRepository.rotate(
+                payload.userId(),
+                payload.jti(),
+                requestRefreshTokenHash,
+                newJti,
+                newRefreshTokenHash,
+                Duration.ofSeconds(refreshTokenExpireSeconds)
+        );
+
+        refreshTokenRepository.delete(payload.userId(), payload.jti());
 
         refreshTokenRepository.save(
                 payload.userId(),
@@ -112,6 +110,15 @@ public class AuthService {
                 TokenHashUtil.sha256(newRefreshToken),
                 Duration.ofSeconds(refreshTokenExpireSeconds)
         );
+
+        if (rotateResult == RefreshTokenRepository.RotateResult.MISMATCH) {
+            refreshTokenRepository.deleteAllByUserId(payload.userId());
+            throw new ServiceException(ErrorCode.AUTH_REFRESH_TOKEN_MISMATCH);
+        }
+
+        if (rotateResult == RefreshTokenRepository.RotateResult.NOT_FOUND) {
+            throw new ServiceException(ErrorCode.AUTH_INVALID_REFRESH_TOKEN);
+        }
 
         return new TokenResponse(newAccessToken, newRefreshToken);
     }
