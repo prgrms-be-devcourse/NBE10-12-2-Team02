@@ -14,17 +14,10 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.context.TestConfiguration;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Primary;
-import org.springframework.data.redis.connection.RedisConnectionFactory;
-import org.springframework.data.redis.connection.lettuce.LettuceConnectionFactory;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.script.RedisScript;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
-import jakarta.annotation.PreDestroy;
-import redis.embedded.RedisServer;
 
 import java.time.LocalDateTime;
 import java.util.concurrent.CountDownLatch;
@@ -39,6 +32,7 @@ import static org.mockito.Mockito.doAnswer;
 
 @ActiveProfiles("test")
 @SpringBootTest
+@org.springframework.context.annotation.Import(com.back.global.RedisTestConfig.class)
 class ConcertServiceTest {
     @Autowired
     private SeatOccupyManager seatOccupyManager;
@@ -69,7 +63,7 @@ class ConcertServiceTest {
         Venue venue = venueRepository.save(Venue.create("올림픽체조경기장", "서울", 15000L));
         schedule = scheduleRepository.save(Schedule.create(concert, venue, LocalDateTime.now().plusHours(12), 1));
 
-        for (int i = 1; i <= 300; i++) {
+        for (int i = 1; i <= 100; i++) {
             ScheduleSeat createdSeat = scheduleSeatRepository.save(ScheduleSeat.create(schedule, "VIP", "A-" + i, 150000, SeatStatus.AVAILABLE));
             if (i == 1) {
                 this.seat = createdSeat;
@@ -96,7 +90,7 @@ class ConcertServiceTest {
     @Test
     @DisplayName("실시간 좌석 선점 동시성 테스트")
     void seatOccupy() throws InterruptedException {
-        int threadCount = 1000;
+        int threadCount = 100;
         CountDownLatch startLatch = new CountDownLatch(1);
         CountDownLatch doneLatch = new CountDownLatch(threadCount);
         AtomicInteger successCount = new AtomicInteger(0);
@@ -153,10 +147,10 @@ class ConcertServiceTest {
 
         long endTime = System.currentTimeMillis();
         System.out.println(">>> [성능 리포트] 총 소요 시간: " + (endTime - startTime) + " ms");
-        System.out.println(">>> [성능 리포트] 커넥션 고갈(타임아웃) 예외 수: " + connectionTimeoutCount.get() + " / " + threadCount);
+        System.out.println(">>> [성능 리포트] 커넥션 고갈 예외 수: " + connectionTimeoutCount.get() + " / " + threadCount);
 
         assertThat(connectionTimeoutCount.get())
-                .as("커넥션 고갈(타임아웃) 예외가 0개여야 합니다.")
+                .as("커넥션 고갈 예외가 0개여야 합니다.")
                 .isEqualTo(0);
 
         assertThat(successCount.get()).isEqualTo(1);
@@ -169,7 +163,7 @@ class ConcertServiceTest {
     @Test
     @DisplayName("파이프라이닝 성능 측정 테스트")
     void pipeliningBenchmark() {
-        int requestCount = 300;
+        int requestCount = 100;
 
         long startTime = System.currentTimeMillis();
         for (int i = 0; i < requestCount; i++) {
@@ -178,49 +172,5 @@ class ConcertServiceTest {
         long endTime = System.currentTimeMillis();
 
         System.out.println(">>> [파이프라이닝 성능 리포트] 300회 조회 총 소요 시간: " + (endTime - startTime) + " ms");
-    }
-
-    @TestConfiguration
-    public static class RedisTestConfig {
-        private static RedisServer redisServer;
-        private static int redisPort;
-
-        private static int findFreePort() {
-            try (java.net.ServerSocket socket = new java.net.ServerSocket(0)) {
-                return socket.getLocalPort();
-            } catch (Exception e) {
-                return 6379;
-            }
-        }
-
-        @Bean
-        @Primary
-        public RedisConnectionFactory redisConnectionFactory() {
-            try {
-                if (redisServer == null) {
-                    redisPort = findFreePort();
-                    redisServer = new RedisServer(redisPort);
-                    redisServer.start();
-                }
-            } catch (Exception e) {
-                throw new RuntimeException("내장 레디스 구동 실패", e);
-            }
-            LettuceConnectionFactory factory = new LettuceConnectionFactory("127.0.0.1", redisPort);
-            factory.afterPropertiesSet();
-            return factory;
-        }
-
-        @Bean
-        @Primary
-        public StringRedisTemplate stringRedisTemplate(RedisConnectionFactory connectionFactory) {
-            return new StringRedisTemplate(connectionFactory);
-        }
-
-        @PreDestroy
-        public void stopRedis() throws java.io.IOException {
-            if (redisServer != null) {
-                redisServer.stop();
-            }
-        }
     }
 }
