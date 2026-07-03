@@ -29,11 +29,8 @@ export default function PaymentPage() {
   const [showModal, setShowModal] = useState(false);
   const [ticketResult, setTicketResult] = useState<PaymentTicketResponse | null>(null);
   const [timeLeft, setTimeLeft] = useState(600);
-<<<<<<< HEAD
   const paymentCompletedRef = useRef(false);
-=======
   const [isProcessing, setIsProcessing] = useState(false);
->>>>>>> origin/main
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -48,8 +45,7 @@ export default function PaymentPage() {
 
     return () => clearInterval(timer);
   }, []);
-
-  // 결제 완료 없이 이 페이지를 벗어나면(뒤로가기 포함) 점유했던 좌석을 해제
+  
   useEffect(() => {
     return () => {
       if (!paymentCompletedRef.current && concertId && scheduleId && seatNumber) {
@@ -61,7 +57,6 @@ export default function PaymentPage() {
             seatNumber,
           }),
         }).catch(() => {
-          // 페이지를 벗어나는 중이라 실패해도 조용히 무시
         });
       }
     };
