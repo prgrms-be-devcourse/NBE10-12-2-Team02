@@ -1,5 +1,6 @@
 package com.back.global.security.jwt.repository;
 
+import com.back.global.security.jwt.RefreshTokenKeyType;
 import com.back.global.security.jwt.RefreshTokenLuaScripts;
 import com.back.global.security.jwt.RefreshTokenRotateResult;
 import lombok.RequiredArgsConstructor;
@@ -33,9 +34,9 @@ public class RefreshTokenRepository {
         Long result = redisTemplate.execute(
                 RefreshTokenLuaScripts.ROTATE,
                 List.of(
-                        getKey(userId, oldJti),
-                        getKey(userId, newJti),
-                        getIndexKey(userId)
+                        generateKey(RefreshTokenKeyType.TOKEN, userId, oldJti),
+                        generateKey(RefreshTokenKeyType.TOKEN, userId, newJti),
+                        generateKey(RefreshTokenKeyType.INDEX, userId, null)
                 ),
                 requestRefreshTokenHash,
                 newRefreshTokenHash,
@@ -53,8 +54,8 @@ public class RefreshTokenRepository {
     }
 
     public void save(Long userId, String jti, String refreshTokenHash, Duration ttl) {
-        String key = getKey(userId, jti);
-        String indexKey = getIndexKey(userId);
+        String key = generateKey(RefreshTokenKeyType.TOKEN, userId, jti);
+        String indexKey = generateKey(RefreshTokenKeyType.INDEX, userId, null);
 
         redisTemplate.opsForValue().set(key, refreshTokenHash, ttl);
         redisTemplate.opsForSet().add(indexKey, jti);
@@ -62,12 +63,12 @@ public class RefreshTokenRepository {
     }
 
     public void delete(Long userId, String jti) {
-        redisTemplate.delete(getKey(userId, jti));
-        redisTemplate.opsForSet().remove(getIndexKey(userId), jti);
+        redisTemplate.delete(generateKey(RefreshTokenKeyType.TOKEN, userId, jti));
+        redisTemplate.opsForSet().remove(generateKey(RefreshTokenKeyType.INDEX, userId, null), jti);
     }
 
     public void deleteAllByUserId(Long userId) {
-        String indexKey = getIndexKey(userId);
+        String indexKey = generateKey(RefreshTokenKeyType.INDEX, userId, null);
         Set<String> jtis = redisTemplate.opsForSet().members(indexKey);
 
         if (jtis == null || jtis.isEmpty()) {
@@ -75,18 +76,34 @@ public class RefreshTokenRepository {
         }
 
         List<String> keys = jtis.stream()
-                .map(jti -> getKey(userId, jti))
+                .map(jti -> generateKey(RefreshTokenKeyType.TOKEN, userId, jti))
                 .toList();
 
         redisTemplate.delete(keys);
         redisTemplate.delete(indexKey);
     }
 
-    private String getIndexKey(Long userId) {
-        return indexPrefix + userId;
-    }
+    private String generateKey(RefreshTokenKeyType type, Long userId, String jti) {
+        if (userId == null) {
+            throw new IllegalArgumentException("userId is required");
+        }
 
-    private String getKey(Long userId, String jti) {
-        return prefix + userId + ":" + jti;
+        return switch (type) {
+            case TOKEN -> {
+                if (jti == null || jti.isBlank()) {
+                    throw new IllegalArgumentException("jti is required for refresh token key");
+                }
+
+                yield prefix + userId + ":" + jti;
+            }
+
+            case INDEX -> {
+                if (jti != null && !jti.isBlank()) {
+                    throw new IllegalArgumentException("jti must be empty for refresh token index key");
+                }
+
+                yield indexPrefix + userId;
+            }
+        };
     }
 }
