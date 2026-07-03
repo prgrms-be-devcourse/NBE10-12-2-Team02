@@ -34,6 +34,9 @@ public class TicketService {
 
     @Transactional
     public PaymentTicketResponse createTicket(Long userId, PaymentTicketRequest request) {
+
+        paymentDelay();
+
         User user = userRepository.findByUserIdAndDeletedAtIsNull(userId)
                 .orElseThrow(() -> new ServiceException(ErrorCode.USER_NOT_FOUND));
 
@@ -69,6 +72,7 @@ public class TicketService {
 
     @Transactional
     public void cancelTicket(Long userId, Long ticketId) {
+        paymentDelay();
         Ticket ticket = ticketRepository.findByTicketIdAndUser_UserId(ticketId, userId)
                 .orElseThrow(() -> new ServiceException(ErrorCode.TICKET_NOT_FOUND_FOR_USER));
 
@@ -86,7 +90,7 @@ public class TicketService {
         );
     }
 
-    public String createTicketNumber() {
+    private String createTicketNumber() {
         return UUID.randomUUID().toString();
     }
 
@@ -112,5 +116,14 @@ public class TicketService {
     private void removeSeatHold(Long concertId, Long scheduleId, String seatNumber) {
         String redisKey = SeatOccupyManager.generateKey(concertId, scheduleId, seatNumber);
         redisTemplate.delete(redisKey);
+    }
+
+    private void paymentDelay() {
+        try {
+            Thread.sleep(2500);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new ServiceException(ErrorCode.PAYMENT_PROCESS_INTERRUPTED);
+        }
     }
 }

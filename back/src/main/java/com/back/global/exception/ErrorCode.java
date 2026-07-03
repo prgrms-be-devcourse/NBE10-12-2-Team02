@@ -50,6 +50,7 @@ public enum ErrorCode {
     // Ticket
     TICKET_NOT_FOUND_FOR_USER("404-6", "해당 유저의 티켓이 존재하지 않습니다."),
     TICKET_ALREADY_CANCELLED("400-3", "이미 취소된 티켓입니다."),
+    PAYMENT_PROCESS_INTERRUPTED("500-1", "결제 처리 대기 중 요청이 중단되었습니다."),
     // bucket4j
     TOO_MANY_REQUESTS("429-1", "요청이 너무 많습니다.");
 
