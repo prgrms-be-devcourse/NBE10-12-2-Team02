@@ -1,8 +1,9 @@
-package com.back.global.security.jwt;
+package com.back.global.security.jwt.repository;
 
+import com.back.global.security.jwt.RefreshTokenLuaScripts;
+import com.back.global.security.jwt.RefreshTokenRotateResult;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.StringRedisTemplate;
-import org.springframework.data.redis.core.script.DefaultRedisScript;
 import org.springframework.stereotype.Repository;
 
 import java.time.Duration;
@@ -17,37 +18,7 @@ public class RefreshTokenRepository {
     private static final String PREFIX = "auth:refresh:";
     private static final String INDEX_PREFIX = "auth:refresh-index:";
 
-    private static final DefaultRedisScript<Long> ROTATE_SCRIPT = new DefaultRedisScript<>(
-            """
-            local oldValue = redis.call('GET', KEYS[1])
-    
-            if not oldValue then
-                return 0
-            end
-    
-            if oldValue ~= ARGV[1] then
-                return -1
-            end
-    
-            redis.call('DEL', KEYS[1])
-            redis.call('SREM', KEYS[3], ARGV[4])
-    
-            redis.call('SET', KEYS[2], ARGV[2], 'EX', ARGV[3])
-            redis.call('SADD', KEYS[3], ARGV[5])
-            redis.call('EXPIRE', KEYS[3], ARGV[3])
-    
-            return 1
-            """,
-            Long.class
-    );
-
-    public enum RotateResult {
-        SUCCESS,
-        NOT_FOUND,
-        MISMATCH
-    }
-
-    public RotateResult rotate(
+    public RefreshTokenRotateResult rotate(
             Long userId,
             String oldJti,
             String requestRefreshTokenHash,
@@ -56,7 +27,7 @@ public class RefreshTokenRepository {
             Duration ttl
     ) {
         Long result = redisTemplate.execute(
-                ROTATE_SCRIPT,
+                RefreshTokenLuaScripts.ROTATE,
                 List.of(
                         getKey(userId, oldJti),
                         getKey(userId, newJti),
@@ -73,17 +44,17 @@ public class RefreshTokenRepository {
         }
 
         if (result == 1L) {
-            return RotateResult.SUCCESS;
+            return RefreshTokenRotateResult.SUCCESS;
         }
 
         if (result == -1L) {
-            return RotateResult.MISMATCH;
+            return RefreshTokenRotateResult.MISMATCH;
         }
 
-        return RotateResult.NOT_FOUND;
+        return RefreshTokenRotateResult.NOT_FOUND;
     }
 
-        public void save(Long userId, String jti, String refreshTokenHash, Duration ttl) {
+    public void save(Long userId, String jti, String refreshTokenHash, Duration ttl) {
         String key = getKey(userId, jti);
         String indexKey = getIndexKey(userId);
 

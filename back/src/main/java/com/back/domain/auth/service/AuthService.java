@@ -6,11 +6,10 @@ import com.back.domain.user.repository.UserRepository;
 import com.back.global.exception.ErrorCode;
 import com.back.global.exception.ServiceException;
 import com.back.global.security.filter.BearerTokenExtractor;
-import com.back.global.security.jwt.BlacklistRepository;
-import com.back.global.security.jwt.JwtTokenProvider;
+import com.back.global.security.jwt.*;
 import com.back.global.security.jwt.payload.RefreshTokenPayload;
-import com.back.global.security.jwt.RefreshTokenRepository;
-import com.back.global.security.jwt.TokenHashUtil;
+import com.back.global.security.jwt.repository.BlacklistRepository;
+import com.back.global.security.jwt.repository.RefreshTokenRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -80,7 +79,7 @@ public class AuthService {
 
         if (payload == null) {
             throw new ServiceException(ErrorCode.AUTH_INVALID_REFRESH_TOKEN);
-        };
+        }
 
         User user = userRepository.findByUserIdAndDeletedAtIsNull(payload.userId())
                 .orElseThrow(() -> new ServiceException(ErrorCode.USER_NOT_FOUND));
@@ -93,7 +92,7 @@ public class AuthService {
         String newRefreshToken = jwtTokenProvider.createRefreshToken(user, newJti);
         String newRefreshTokenHash = TokenHashUtil.sha256(newRefreshToken);
 
-        RefreshTokenRepository.RotateResult rotateResult = refreshTokenRepository.rotate(
+        RefreshTokenRotateResult rotateResult= refreshTokenRepository.rotate(
                 payload.userId(),
                 payload.jti(),
                 requestRefreshTokenHash,
@@ -111,12 +110,12 @@ public class AuthService {
                 Duration.ofSeconds(refreshTokenExpireSeconds)
         );
 
-        if (rotateResult == RefreshTokenRepository.RotateResult.MISMATCH) {
+        if (rotateResult == RefreshTokenRotateResult.MISMATCH) {
             refreshTokenRepository.deleteAllByUserId(payload.userId());
             throw new ServiceException(ErrorCode.AUTH_REFRESH_TOKEN_MISMATCH);
         }
 
-        if (rotateResult == RefreshTokenRepository.RotateResult.NOT_FOUND) {
+        if (rotateResult == RefreshTokenRotateResult.NOT_FOUND) {
             throw new ServiceException(ErrorCode.AUTH_INVALID_REFRESH_TOKEN);
         }
 
