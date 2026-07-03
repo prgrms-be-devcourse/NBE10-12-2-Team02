@@ -39,19 +39,13 @@ public class RefreshTokenRepository {
                 oldJti,
                 newJti
         );
-        if (result == null) {
-            throw new IllegalStateException("Refresh token rotation failed");
-        }
 
-        if (result == 1L) {
-            return RefreshTokenRotateResult.SUCCESS;
-        }
-
-        if (result == -1L) {
-            return RefreshTokenRotateResult.MISMATCH;
-        }
-
-        return RefreshTokenRotateResult.NOT_FOUND;
+        return switch (Math.toIntExact(result)) {
+            case 1 -> RefreshTokenRotateResult.SUCCESS;
+            case -1 -> RefreshTokenRotateResult.MISMATCH;
+            case 0 -> RefreshTokenRotateResult.NOT_FOUND;
+            default -> throw new IllegalStateException("Refresh token rotation failed");
+        };
     }
 
     public void save(Long userId, String jti, String refreshTokenHash, Duration ttl) {
