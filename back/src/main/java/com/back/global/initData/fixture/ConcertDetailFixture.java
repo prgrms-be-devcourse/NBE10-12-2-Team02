@@ -15,14 +15,10 @@ import java.util.stream.Collectors;
 @Component
 @RequiredArgsConstructor
 public class ConcertDetailFixture {
-
     private final ConcertDeatilRepository concertDeatilRepository;
-
     private static final String BASE_URL = "/images/concerts/";
-    // 파일명/포스터URL 안에서 "PF" + 숫자로 된 KOPIS 공연 식별자만 뽑아내는 패턴
     private static final Pattern MT20ID_PATTERN = Pattern.compile("(PF\\d+)");
 
-    // front/public/images/concerts/ 안에 실제로 저장된 파일명 전체
     private static final List<String> DETAIL_IMAGE_FILES = List.of(
             "PF_PF232456_231213_0419290.webp",
             "PF_PF232456_231213_0419291.webp",
