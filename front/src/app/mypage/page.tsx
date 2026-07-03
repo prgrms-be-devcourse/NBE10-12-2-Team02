@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { apiFetch, decodeToken, setAccessToken } from "@/lib/api";
+import { apiFetch, decodeToken } from "@/lib/api";
 
 interface TicketInfo {
   ticketId: number;
@@ -26,6 +26,7 @@ interface MyPageData {
 
 export default function MyPage() {
   const router = useRouter();
+  const hasCheckedAuth = useRef(false);
 
   const [data, setData] = useState<MyPageData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -35,6 +36,9 @@ export default function MyPage() {
   const ticketsPerPage = 5;
 
   useEffect(() => {
+    if (hasCheckedAuth.current) return;
+    hasCheckedAuth.current = true;
+
     if (!decodeToken()) {
       alert("로그인이 필요합니다.");
       router.push("/login");
@@ -45,13 +49,11 @@ export default function MyPage() {
       .then((res) => setData(res.data))
       .catch((e) => alert(e instanceof Error ? e.message : "마이페이지 조회에 실패했습니다."))
       .finally(() => setLoading(false));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleWithdraw = async () => {
     try {
       await apiFetch(`/users/withdraw`, { method: "PATCH" });
-      setAccessToken(null);
       alert("회원 탈퇴가 완료되었습니다.");
       router.push("/");
     } catch (e) {

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { apiFetch, decodeToken } from "@/lib/api";
 
@@ -28,6 +28,7 @@ export default function PaymentPage() {
   const [showModal, setShowModal] = useState(false);
   const [ticketResult, setTicketResult] = useState<PaymentTicketResponse | null>(null);
   const [timeLeft, setTimeLeft] = useState(600);
+  const paymentCompletedRef = useRef(false);
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -42,6 +43,24 @@ export default function PaymentPage() {
 
     return () => clearInterval(timer);
   }, []);
+
+  // 결제 완료 없이 이 페이지를 벗어나면(뒤로가기 포함) 점유했던 좌석을 해제
+  useEffect(() => {
+    return () => {
+      if (!paymentCompletedRef.current && concertId && scheduleId && seatNumber) {
+        apiFetch(`/concerts/seats/occupy`, {
+          method: "DELETE",
+          body: JSON.stringify({
+            concertId: Number(concertId),
+            scheduleId: Number(scheduleId),
+            seatNumber,
+          }),
+        }).catch(() => {
+          // 페이지를 벗어나는 중이라 실패해도 조용히 무시
+        });
+      }
+    };
+  }, [concertId, scheduleId, seatNumber]);
 
   const formatTime = (seconds: number) => {
     const min = Math.floor(seconds / 60);
@@ -75,6 +94,7 @@ export default function PaymentPage() {
           occupyToken,
         }),
       });
+      paymentCompletedRef.current = true;
       setTicketResult(res.data);
       setShowModal(true);
     } catch (e) {
