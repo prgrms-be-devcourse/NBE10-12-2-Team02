@@ -2,6 +2,7 @@ package com.back.domain.queue.listener;
 
 import com.back.domain.queue.constant.QueueEventType;
 import com.back.domain.queue.dto.QueueEventResponse;
+import com.back.domain.queue.event.EntryAllowedEvent;
 import com.back.domain.queue.event.QueueRankUpdatedEvent;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.event.EventListener;
@@ -18,11 +19,24 @@ public class QueueEntryEventHandler {
     @EventListener
     public void handleQueueRankUpdated(QueueRankUpdatedEvent event) {
         QueueEventResponse<QueueRankUpdatedEvent> response =
-                new QueueEventResponse<>(QueueEventType.QUEUE_RANK_UPDATED, event);
+                QueueEventResponse.of(QueueEventType.QUEUE_RANK_UPDATED, event);
 
         messagingTemplate.convertAndSendToUser(
                 event.userId().toString(),
                 "/queue/schedules/" + event.scheduleId() + "/status",
+                response
+        );
+    }
+
+    @Async
+    @EventListener
+    public void handleEntryAllowed(EntryAllowedEvent event) {
+        QueueEventResponse<EntryAllowedEvent> response =
+                QueueEventResponse.of(QueueEventType.ENTRY_ALLOWED, event);
+
+        messagingTemplate.convertAndSendToUser(
+                event.scheduleId().toString(),
+                "/queue/schedules/" + event.scheduleId() + "/entry",
                 response
         );
     }
