@@ -22,6 +22,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.data.redis.core.HashOperations;
 import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.data.redis.core.ZSetOperations;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
@@ -34,8 +35,8 @@ import java.util.List;
 import static com.back.domain.schedule.entity.SeatStatus.AVAILABLE;
 import static com.back.domain.schedule.entity.SeatStatus.SOLD_OUT;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
@@ -123,7 +124,14 @@ class TicketControllerTest {
                 }
                 """.formatted(concert.getConcertId(), schedule.getScheduleId());
 
+        ZSetOperations<String, String> zSetOperations = mock(ZSetOperations.class);
+        when(redisTemplate.opsForZSet()).thenReturn(zSetOperations);
+
+        when(zSetOperations.score(anyString(), anyString()))
+                .thenReturn((double) (System.currentTimeMillis() + 600000));
+
         mockMvc.perform(post("/api/v1/tickets/reserve")
+                        .header("X-Queue-Token", "test-queue-token")
                         .with(user(securityUser))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(requestBody))

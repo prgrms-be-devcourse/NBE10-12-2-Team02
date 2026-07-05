@@ -48,8 +48,10 @@ public class WebConfig implements WebMvcConfigurer {
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
         registry.addInterceptor(rateLimitInterceptor)
+                .addPathPatterns("/api/v1/schedules/*/seats/status");
+
+        registry.addInterceptor(queueInterceptor)
                 .addPathPatterns(
-                        "/api/v1/schedules/*/seats/status",
                         "/api/v1/concerts/*/schedules/*/seats",
                         "/api/v1/concerts/*/schedules/*/seats/occupy",
                         "/api/v1/tickets/reserve"
