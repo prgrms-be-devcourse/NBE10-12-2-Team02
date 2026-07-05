@@ -91,7 +91,7 @@ public class TicketService {
     }
 
     private void validateSeatHold(Long userId, PaymentTicketRequest request) {
-        String redisKey = SeatOccupyManager.generateKey(request.concertId(), request.scheduleId(), request.seatNumber());
+        String redisKey = SeatOccupyManager.generateSeatOccupyKey(request.concertId(), request.scheduleId(), request.seatNumber());
 
         List<Object> values = redisTemplate.opsForHash().multiGet(redisKey, List.of("userId", "occupyToken"));
         if (values == null || values.size() < 2 || values.get(0) == null || values.get(1) == null) {
@@ -110,7 +110,7 @@ public class TicketService {
     }
 
     private void removeSeatHold(Long concertId, Long scheduleId, String seatNumber) {
-        String redisKey = SeatOccupyManager.generateKey(concertId, scheduleId, seatNumber);
+        String redisKey = SeatOccupyManager.generateSeatOccupyKey(concertId, scheduleId, seatNumber);
         redisTemplate.delete(redisKey);
     }
 }

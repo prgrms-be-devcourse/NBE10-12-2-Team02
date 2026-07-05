@@ -37,12 +37,16 @@ public class QueueInterceptor implements HandlerInterceptor {
             throw new ServiceException(ErrorCode.QUEUE_TOKEN_NOT_FOUND);
         }
 
-        String activeQueueKey = "queue:active:schedule:" + scheduleId;
+        String activeQueueKey = generateQueueActiveKey(scheduleId);
         Double score = redisTemplate.opsForZSet().score(activeQueueKey, token);
 
         if (score == null || score < System.currentTimeMillis()) {
             throw new ServiceException(ErrorCode.QUEUE_SESSION_EXPIRED);
         }
         return true;
+    }
+
+    public static String generateQueueActiveKey(Long scheduleId) {
+        return "queue:active:schedule:%d".formatted(scheduleId);
     }
 }

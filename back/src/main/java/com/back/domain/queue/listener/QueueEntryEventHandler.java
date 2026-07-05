@@ -23,7 +23,7 @@ public class QueueEntryEventHandler {
 
         messagingTemplate.convertAndSendToUser(
                 event.userId().toString(),
-                "/queue/schedules/" + event.scheduleId() + "/status",
+                "/queue/schedules/%s/status".formatted(event.scheduleId()),
                 response
         );
     }
@@ -36,7 +36,7 @@ public class QueueEntryEventHandler {
 
         messagingTemplate.convertAndSendToUser(
                 event.scheduleId().toString(),
-                "/queue/schedules/" + event.scheduleId() + "/entry",
+                "/queue/schedules/%s/entry".formatted(event.scheduleId()),
                 response
         );
     }

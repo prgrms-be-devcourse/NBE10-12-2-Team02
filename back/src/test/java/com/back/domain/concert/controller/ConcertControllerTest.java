@@ -201,7 +201,7 @@ class ConcertControllerTest {
     void t5() throws Exception {
         Long userId = 1L;
         String seatNumber = "A-1";
-        String redisKey = SeatOccupyManager.generateKey(concert.getConcertId(), schedule.getScheduleId(), seatNumber);
+        String redisKey = SeatOccupyManager.generateSeatOccupyKey(concert.getConcertId(), schedule.getScheduleId(), seatNumber);
 
         HashOperations<String, Object, Object> hashOperations = mock(HashOperations.class);
         when(redisTemplate.opsForHash()).thenReturn(hashOperations);
