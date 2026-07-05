@@ -40,7 +40,8 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -115,6 +116,12 @@ class TicketControllerTest {
     @Test
     @DisplayName("티켓 생성 성공")
     void createTicket() throws Exception {
+        ZSetOperations<String, String> zSetOperations = mock(ZSetOperations.class);
+        when(redisTemplate.opsForZSet()).thenReturn(zSetOperations);
+
+        when(zSetOperations.score(anyString(), anyString()))
+                .thenReturn((double) (System.currentTimeMillis() + 600000));
+
         String requestBody = """
                 {
                   "concertId": %d,
@@ -123,12 +130,6 @@ class TicketControllerTest {
                   "occupyToken": "test-token"
                 }
                 """.formatted(concert.getConcertId(), schedule.getScheduleId());
-
-        ZSetOperations<String, String> zSetOperations = mock(ZSetOperations.class);
-        when(redisTemplate.opsForZSet()).thenReturn(zSetOperations);
-
-        when(zSetOperations.score(anyString(), anyString()))
-                .thenReturn((double) (System.currentTimeMillis() + 600000));
 
         mockMvc.perform(post("/api/v1/tickets/reserve")
                         .header("X-Queue-Token", "test-queue-token")
