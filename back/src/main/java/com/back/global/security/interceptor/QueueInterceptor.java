@@ -9,7 +9,6 @@ import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.HandlerInterceptor;
 import org.springframework.web.servlet.HandlerMapping;
-import tools.jackson.databind.ObjectMapper;
 
 import java.util.Map;
 
@@ -17,7 +16,6 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class QueueInterceptor implements HandlerInterceptor {
     private final StringRedisTemplate redisTemplate;
-    private final ObjectMapper objectMapper;
 
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
