@@ -51,7 +51,7 @@ public class WebConfig implements WebMvcConfigurer {
                 .addPathPatterns(
                         "/api/v1/schedules/*/seats/status",
                         "/api/v1/concerts/*/schedules/*/seats",
-                        "/api/v1/concerts/seats/occupy",
+                        "/api/v1/concerts/*/schedules/*/seats/occupy",
                         "/api/v1/tickets/reserve"
                 );
     }

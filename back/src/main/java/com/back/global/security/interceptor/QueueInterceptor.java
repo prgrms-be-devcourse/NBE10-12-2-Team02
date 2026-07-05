@@ -21,20 +21,20 @@ public class QueueInterceptor implements HandlerInterceptor {
 
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
-        String token = request.getHeader("X-Queue-Token");
-
         @SuppressWarnings("unchecked")
         Map<String, String> pathVariables = (Map<String, String>) request.getAttribute(HandlerMapping.URI_TEMPLATE_VARIABLES_ATTRIBUTE);
 
-        String scheduleIdStr = (pathVariables != null && pathVariables.containsKey("scheduleId"))
-                ? pathVariables.get("scheduleId")
-                : request.getHeader("X-Schedule-Id");
-
-        if (scheduleIdStr == null || scheduleIdStr.isBlank()) {
+        if (pathVariables == null || !pathVariables.containsKey("scheduleId")) {
             throw new ServiceException(ErrorCode.BAD_REQUEST);
         }
 
-        Long scheduleId = Long.parseLong(scheduleIdStr);
+        Long scheduleId = Long.parseLong(pathVariables.get("scheduleId"));
+        String token = request.getHeader("X-Queue-Token");
+
+        if (token == null || token.isBlank()) {
+            throw new ServiceException(ErrorCode.QUEUE_TOKEN_NOT_FOUND);
+        }
+
         String activeQueueKey = "queue:active:schedule:" + scheduleId;
         Double score = redisTemplate.opsForZSet().score(activeQueueKey, token);
 
