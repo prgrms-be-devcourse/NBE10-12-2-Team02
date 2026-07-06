@@ -63,7 +63,6 @@ public class SeatOccupyManager {
             throw new ServiceException(ErrorCode.SEAT_HELD_BY_OTHER_USER);
         }
 
-        // ZSet 인덱스에 좌석 등록 (score = 만료 시점 epoch millis)
         String indexKey = generateSeatOccupyIndexKey(concertId, scheduleId);
         double expireAt = System.currentTimeMillis() + (OCCUPY_TTL_SECONDS * 1000);
         redisTemplate.opsForZSet().add(indexKey, seatNumber, expireAt);
@@ -86,7 +85,6 @@ public class SeatOccupyManager {
 
         redisTemplate.delete(redisKey);
 
-        // ZSet 인덱스에서 좌석 제거
         String indexKey = generateSeatOccupyIndexKey(concertId, scheduleId);
         redisTemplate.opsForZSet().remove(indexKey, seatNumber);
     }
@@ -95,7 +93,6 @@ public class SeatOccupyManager {
         concertService.validateConcertScheduleMatch(concertId, scheduleId);
         List<ScheduleSeat> seats = concertService.getScheduleSeats(scheduleId);
 
-        // ZSet에서 만료된 좌석 정리 후 현재 점유 중인 좌석 목록을 1회 조회
         String indexKey = generateSeatOccupyIndexKey(concertId, scheduleId);
         long now = System.currentTimeMillis();
         redisTemplate.opsForZSet().removeRangeByScore(indexKey, 0, now);

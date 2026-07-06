@@ -153,7 +153,6 @@ public class TicketService {
         String redisKey = SeatOccupyManager.generateSeatOccupyKey(concertId, scheduleId, seatNumber);
         redisTemplate.delete(redisKey);
 
-        // ZSet 인덱스에서 좌석 제거
         String indexKey = SeatOccupyManager.generateSeatOccupyIndexKey(concertId, scheduleId);
         redisTemplate.opsForZSet().remove(indexKey, seatNumber);
     }

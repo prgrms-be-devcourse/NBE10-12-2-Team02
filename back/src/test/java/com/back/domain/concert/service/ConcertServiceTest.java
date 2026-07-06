@@ -164,7 +164,7 @@ class ConcertServiceTest {
     }
 
     @Test
-    @DisplayName("파이프라이닝 성능 측정 테스트")
+    @DisplayName("조회 총 소요 시간 측정 테스트")
     void pipeliningBenchmark() {
         int requestCount = 300;
 
