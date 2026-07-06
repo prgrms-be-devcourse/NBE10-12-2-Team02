@@ -27,19 +27,15 @@ dependencies {
     implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:3.0.2")
     implementation("com.bucket4j:bucket4j_jdk17-core:8.14.0") // bucket4j
     implementation("com.github.ben-manes.caffeine:caffeine") // caffeine
-    implementation("org.springframework.boot:spring-boot-starter-data-redis")
-    compileOnly("org.projectlombok:lombok")
     developmentOnly("org.springframework.boot:spring-boot-devtools")
     runtimeOnly("com.h2database:h2")
-    annotationProcessor("org.projectlombok:lombok")
     testImplementation("org.springframework.boot:spring-boot-starter-data-jpa-test")
     testImplementation("org.springframework.boot:spring-boot-starter-validation-test")
     testImplementation("org.springframework.boot:spring-boot-starter-webmvc-test")
-    testCompileOnly("org.projectlombok:lombok")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
-    testAnnotationProcessor("org.projectlombok:lombok")
-    testImplementation("org.springframework.boot:spring-boot-starter-data-redis-test")
-    testImplementation("com.github.codemonstur:embedded-redis:1.4.3")
+    // lombok
+    compileOnly("org.projectlombok:lombok")
+    annotationProcessor("org.projectlombok:lombok")
     // security
     implementation("org.springframework.boot:spring-boot-starter-security")
     testImplementation("org.springframework.boot:spring-boot-starter-security-test")
@@ -51,6 +47,11 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-data-redis")
     // OAuth2
     implementation("org.springframework.boot:spring-boot-starter-oauth2-client")
+    testImplementation("org.springframework.boot:spring-boot-starter-data-redis-test")
+    testImplementation("com.github.codemonstur:embedded-redis:1.4.3")
+    //WebSocket
+    implementation("org.springframework.boot:spring-boot-starter-websocket")
+    testImplementation("org.springframework.boot:spring-boot-starter-websocket-test")
 }
 
 tasks.withType<Test> {
