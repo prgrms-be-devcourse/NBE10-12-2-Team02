@@ -50,6 +50,17 @@ public class WaitingQueueManager {
         return rank + 1;
     }
 
+    public void cancelWaiting(Long scheduleId, Long userId) {
+        String waitKey = generateWaitKey(scheduleId);
+        String user = userId.toString();
+
+        Long removedRank = redisTemplate.opsForZSet().remove(waitKey, user);
+
+        if (removedRank == null || removedRank == 0L) {
+            throw new ServiceException(ErrorCode.WAITING_QUEUE_NOT_FOUND);
+        }
+    }
+
     private String generateWaitKey(Long scheduleId) {
         return WAIT_KEY_PREFIX + scheduleId;
     }

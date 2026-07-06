@@ -47,4 +47,17 @@ public class WaitingQueueController {
 
         return new RsData<>("200-1", "대기열 순번 조회 성공", response);
     }
+    @DeleteMapping("/concerts/{concertId}/schedules/{scheduleId}/waiting-queue")
+    public RsData<Void> cancelWaiting(
+            @PathVariable Long concertId,
+            @PathVariable Long scheduleId
+    ) {
+        waitingQueueService.cancelWaiting(
+                concertId,
+                scheduleId,
+                requestContext.getActor().getId()
+        );
+
+        return new RsData<>("200-1", "대기열 취소 성공");
+    }
 }

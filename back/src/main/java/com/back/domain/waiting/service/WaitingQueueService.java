@@ -43,6 +43,13 @@ public class WaitingQueueService {
         );
     }
 
+    public void cancelWaiting(Long concertId, Long scheduleId, Long userId) {
+        validateUser(userId);
+        concertService.validateConcertScheduleMatch(concertId, scheduleId);
+
+        waitingQueueManager.cancelWaiting(scheduleId, userId);
+    }
+
     private void validateUser(Long userId) {
         userRepository.findByUserIdAndDeletedAtIsNull(userId)
                 .orElseThrow(() -> new ServiceException(ErrorCode.USER_NOT_FOUND));
