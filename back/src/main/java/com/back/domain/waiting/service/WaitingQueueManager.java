@@ -1,6 +1,5 @@
-package com.back.domain.waiting;
+package com.back.domain.waiting.service;
 
-import com.back.domain.waiting.dto.WaitingQueueRegisterResponse;
 import com.back.global.exception.ErrorCode;
 import com.back.global.exception.ServiceException;
 import lombok.RequiredArgsConstructor;
@@ -19,61 +18,64 @@ public class WaitingQueueManager {
     private static final String WAIT_KEY_PREFIX = "queue:wait:schedule:";
     private static final String SEQUENCE_KEY_PREFIX = "queue:wait:sequence:schedule:";
 
-    public WaitingQueueRegisterResponse registerWaiting(Long scheduleId,Long userId) {
+    public Long registerWaiting(Long scheduleId, Long userId) {
         String waitKey = generateWaitKey(scheduleId);
         String seqKey = generateSequenceKey(scheduleId);
         String user = userId.toString();
 
-        List<?> result = redisTemplate.execute(
+        Long rank = redisTemplate.execute(
                 REGISTER_WAITING_SCRIPT,
                 List.of(waitKey, seqKey),
                 user
         );
-        if (result == null || result.size() < 2) {
+
+        if (rank == null || rank < 1) {
             throw new ServiceException(ErrorCode.WAITING_QUEUE_REGISTER_FAILED);
         }
 
-        Long rank = ((Number) result.get(0)).longValue();
-        boolean registered = ((Number) result.get(1)).longValue() == 1L;
+        return rank;
+    }
 
-        if (rank < 1) {
-            throw new ServiceException(ErrorCode.WAITING_QUEUE_REGISTER_FAILED);
+    public Long showWaitingRank(Long scheduleId, Long userId) {
+        String waitKey = generateWaitKey(scheduleId);
+        String user = userId.toString();
+
+        Long rank = redisTemplate.opsForZSet()
+                .rank(waitKey, user);
+
+        if (rank == null) {
+            throw new ServiceException(ErrorCode.WAITING_QUEUE_NOT_FOUND);
         }
-        //TODO 코드 컨벤션으로 해당 부분도 of()로 통일할지 논의 필요
-        return new WaitingQueueRegisterResponse(
-                scheduleId,
-                userId,
-                rank,
-                registered
-        );
+
+        return rank + 1;
     }
 
     private String generateWaitKey(Long scheduleId) {
         return WAIT_KEY_PREFIX + scheduleId;
     }
+
     private String generateSequenceKey(Long scheduleId) {
         return SEQUENCE_KEY_PREFIX + scheduleId;
     }
-    private static final RedisScript<List> REGISTER_WAITING_SCRIPT = new DefaultRedisScript<>(
+
+    private static final RedisScript<Long> REGISTER_WAITING_SCRIPT = new DefaultRedisScript<>(
             """
             local exists = redis.call('ZSCORE', KEYS[1], ARGV[1])
-            local registered = 0
   
             if not exists then
               local sequence = redis.call('INCR', KEYS[2])
               redis.call('ZADD', KEYS[1], sequence, ARGV[1])
-              registered = 1
             end
   
             local rank = redis.call('ZRANK', KEYS[1], ARGV[1])
   
             if not rank then
-              return {-1, registered}
+              return -1
             end
   
-            return {rank + 1, registered}
+            return rank + 1
             """,
-            List.class
+            Long.class
     );
 
 }

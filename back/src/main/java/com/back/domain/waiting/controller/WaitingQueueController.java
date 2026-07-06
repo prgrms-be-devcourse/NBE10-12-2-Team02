@@ -1,9 +1,10 @@
 package com.back.domain.waiting.controller;
 
-import com.back.domain.waiting.dto.WaitingQueueRegisterResponse;
+import com.back.domain.waiting.dto.WaitingQueueResponse;
 import com.back.domain.waiting.service.WaitingQueueService;
 import com.back.global.annotation.ApiV1;
 import com.back.global.requestcontext.RequestContext;
+import com.back.global.rsData.RsData;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -21,14 +22,15 @@ public class WaitingQueueController {
     private final RequestContext requestContext;
 
     @PostMapping("/concerts/{concertId}/schedules/{scheduleId}/waiting-queue")
-    public WaitingQueueRegisterResponse registerWaiting(
+    public RsData<WaitingQueueResponse> registerWaiting(
             @PathVariable Long concertId,
             @PathVariable Long scheduleId
     ) {
-        return waitingQueueService.registerWaiting(
+        WaitingQueueResponse response = waitingQueueService.registerWaiting(
                 concertId,
                 scheduleId,
                 requestContext.getActor().getId()
         );
+        return new RsData<>("200-1","대기열 등록 성공",response);
     }
 }
