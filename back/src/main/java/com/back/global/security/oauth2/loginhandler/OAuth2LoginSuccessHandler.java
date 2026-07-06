@@ -39,7 +39,14 @@ public class OAuth2LoginSuccessHandler implements AuthenticationSuccessHandler {
             return;
         }
 
-        Long userId = Long.valueOf(userIdAttribute.toString());
+        Long userId;
+
+        try {
+            userId = Long.valueOf(userIdAttribute.toString());
+        } catch (NumberFormatException e) {
+            redirectHandler.redirectFailure(response, "oauth2_user_id_invalid");
+            return;
+        }
 
         User user = userRepository.findByUserIdAndDeletedAtIsNull(userId)
                 .orElse(null);
@@ -49,10 +56,12 @@ public class OAuth2LoginSuccessHandler implements AuthenticationSuccessHandler {
             return;
         }
 
-        TokenResponse tokenResponse = authService.issueTokens(user);
-
-        requestContext.setCookie("refreshToken", tokenResponse.refreshToken(), "/api/v1/auth");
-
-        redirectHandler.redirectSuccess(response, tokenResponse.accessToken());
+        try {
+            TokenResponse tokenResponse = authService.issueTokens(user);
+            requestContext.setCookie("refreshToken", tokenResponse.refreshToken(), "/api/v1/auth");
+            redirectHandler.redirectSuccess(response, tokenResponse.accessToken());
+        } catch (RuntimeException e) {
+            redirectHandler.redirectFailure(response, "oauth2_token_issue_failed");
+        }
     }
 }

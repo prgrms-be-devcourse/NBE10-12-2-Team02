@@ -3,13 +3,12 @@ package com.back.global.security.oauth2.service;
 import com.back.domain.user.entity.LoginType;
 import com.back.domain.user.entity.User;
 import com.back.domain.user.repository.UserRepository;
-import com.back.global.exception.ErrorCode;
-import com.back.global.exception.ServiceException;
 import com.back.global.security.oauth2.info.GoogleOAuth2UserInfo;
 import com.back.global.security.oauth2.info.KakaoOAuth2UserInfo;
 import com.back.global.security.oauth2.info.NaverOAuth2UserInfo;
 import com.back.global.security.oauth2.info.OAuth2UserInfo;
 import lombok.RequiredArgsConstructor;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.client.userinfo.DefaultOAuth2UserService;
 import org.springframework.security.oauth2.client.userinfo.OAuth2UserRequest;
@@ -108,7 +107,11 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
                 loginType
         );
 
-        return userRepository.save(user);
+        try {
+            return userRepository.save(user);
+        } catch (DataIntegrityViolationException e) {
+            throw new OAuth2AuthenticationException("oauth2_email_already_exists");
+        }
     }
 
     private void validateRequired(String value, String errorCode) {
