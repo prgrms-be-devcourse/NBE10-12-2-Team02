@@ -175,6 +175,6 @@ class ConcertServiceTest {
         }
         long endTime = System.currentTimeMillis();
 
-        System.out.println(">>> [파이프라이닝 성능 리포트] 조회 총 소요 시간: " + (endTime - startTime) + " ms");
+        System.out.println(">>> 조회 총 소요 시간: " + (endTime - startTime) + " ms");
     }
 }
