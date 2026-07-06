@@ -8,17 +8,15 @@ import com.back.domain.schedule.entity.SeatStatus;
 import com.back.global.exception.ErrorCode;
 import com.back.global.exception.ServiceException;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.redis.core.RedisCallback;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.script.DefaultRedisScript;
 import org.springframework.data.redis.core.script.RedisScript;
 import org.springframework.stereotype.Component;
 
-import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
-import java.util.stream.IntStream;
 
 @Component
 @RequiredArgsConstructor
@@ -65,6 +63,11 @@ public class SeatOccupyManager {
             throw new ServiceException(ErrorCode.SEAT_HELD_BY_OTHER_USER);
         }
 
+        // ZSet 인덱스에 좌석 등록 (score = 만료 시점 epoch millis)
+        String indexKey = generateSeatOccupyIndexKey(concertId, scheduleId);
+        double expireAt = System.currentTimeMillis() + (OCCUPY_TTL_SECONDS * 1000);
+        redisTemplate.opsForZSet().add(indexKey, seatNumber, expireAt);
+
         return SeatOccupyResponse.of(occupyToken, OCCUPY_TTL_SECONDS);
     }
 
@@ -82,30 +85,29 @@ public class SeatOccupyManager {
         }
 
         redisTemplate.delete(redisKey);
+
+        // ZSet 인덱스에서 좌석 제거
+        String indexKey = generateSeatOccupyIndexKey(concertId, scheduleId);
+        redisTemplate.opsForZSet().remove(indexKey, seatNumber);
     }
 
     public SeatSelectionResponse getSeatSelection(Long concertId, Long scheduleId, Long userId) {
         concertService.validateConcertScheduleMatch(concertId, scheduleId);
         List<ScheduleSeat> seats = concertService.getScheduleSeats(scheduleId);
 
-        List<Object> existsResults = redisTemplate.executePipelined((RedisCallback<Object>) connection -> {
-            for (var seat : seats) {
-                String key = generateSeatOccupyKey(concertId, scheduleId, seat.getSeatNumber());
-                byte[] rawKey = key.getBytes(StandardCharsets.UTF_8);
-                connection.keyCommands().exists(rawKey);
-            }
-            return null;
-        });
+        // ZSet에서 만료된 좌석 정리 후 현재 점유 중인 좌석 목록을 1회 조회
+        String indexKey = generateSeatOccupyIndexKey(concertId, scheduleId);
+        long now = System.currentTimeMillis();
+        redisTemplate.opsForZSet().removeRangeByScore(indexKey, 0, now);
+        Set<String> occupiedSeats = redisTemplate.opsForZSet().rangeByScore(indexKey, now, Double.MAX_VALUE);
 
         Map<String, Integer> pricesMap = concertService.convertToPriceMap(seats);
 
-        List<SeatDetailResponse> seatResponses = IntStream.range(0, seats.size())
-                .mapToObj(i -> {
-                    ScheduleSeat seat = seats.get(i);
+        List<SeatDetailResponse> seatResponses = seats.stream()
+                .map(seat -> {
                     SeatStatus status = seat.getSeatStatus();
-                    Object res = existsResults.get(i);
                     boolean isHold = status == SeatStatus.AVAILABLE &&
-                            (Boolean.TRUE.equals(res) || (res instanceof Number n && n.longValue() > 0));
+                            occupiedSeats != null && occupiedSeats.contains(seat.getSeatNumber());
 
                     return new SeatDetailResponse(
                             seat.getSeatNumber(),
@@ -120,5 +122,9 @@ public class SeatOccupyManager {
 
     public static String generateSeatOccupyKey(Long concertId, Long scheduleId, String seatNumber) {
         return "seat:occupy:%d:%d:%s".formatted(concertId, scheduleId, seatNumber);
+    }
+
+    public static String generateSeatOccupyIndexKey(Long concertId, Long scheduleId) {
+        return "seat:occupy:index:%d:%d".formatted(concertId, scheduleId);
     }
 }

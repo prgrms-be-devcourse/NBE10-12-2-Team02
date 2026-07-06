@@ -16,7 +16,6 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.redis.core.StringRedisTemplate;
-import org.springframework.data.redis.core.script.RedisScript;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 
@@ -27,9 +26,6 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyList;
-import static org.mockito.Mockito.doAnswer;
 
 @ActiveProfiles("test")
 @SpringBootTest
@@ -67,7 +63,7 @@ class ConcertServiceTest {
         Venue venue = venueRepository.save(Venue.create("올림픽체조경기장", "서울", 15000L));
         schedule = scheduleRepository.save(Schedule.create(concert, venue, LocalDateTime.now().plusHours(12), 1));
 
-        for (int i = 1; i <= 10; i++) {
+        for (int i = 1; i <= 300; i++) {
             ScheduleSeat createdSeat = scheduleSeatRepository.save(ScheduleSeat.create(schedule, "VIP", "A-" + i, 150000, SeatStatus.AVAILABLE));
             if (i == 1) {
                 this.seat = createdSeat;
@@ -79,16 +75,16 @@ class ConcertServiceTest {
             redisTemplate.delete(keys);
         }
 
-        doAnswer(invocation -> {
-            Thread.sleep(10);
-            return invocation.callRealMethod();
-        }).when(redisTemplate).execute(
-                any(RedisScript.class),
-                anyList(),
-                any(Object.class),
-                any(Object.class),
-                any(Object.class)
-        );
+//        doAnswer(invocation -> {
+//            Thread.sleep(10);
+//            return invocation.callRealMethod();
+//        }).when(redisTemplate).execute(
+//                any(RedisScript.class),
+//                anyList(),
+//                any(Object.class),
+//                any(Object.class),
+//                any(Object.class)
+//        );
     }
 
     @Test
@@ -170,7 +166,7 @@ class ConcertServiceTest {
     @Test
     @DisplayName("파이프라이닝 성능 측정 테스트")
     void pipeliningBenchmark() {
-        int requestCount = 10;
+        int requestCount = 300;
 
         long startTime = System.currentTimeMillis();
         Long userId = 1L;
