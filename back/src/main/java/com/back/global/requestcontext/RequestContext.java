@@ -80,4 +80,14 @@ public class RequestContext {
     public void deleteCookie(String name, String path) {
         setCookie(name, null, path);
     }
+
+    public String getClientIp() {
+        String forwardedFor = getHeader("X-Forwarded-For", "");
+
+        if (!forwardedFor.isBlank()) {
+            return forwardedFor.split(",")[0].trim();
+        }
+
+        return req.getRemoteAddr();
+    }
 }

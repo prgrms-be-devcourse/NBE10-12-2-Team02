@@ -13,8 +13,10 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
 
+@Slf4j
 @ApiV1
 @RestController
 @RequestMapping("/auth")
@@ -83,12 +85,22 @@ public class AuthController {
 
         try {
             TokenResponse tokenResponse = authService.refresh(refreshToken);
+
             requestContext.setCookie("refreshToken", tokenResponse.refreshToken(), "/api/v1/auth");
             requestContext.setHeader("Authorization", "Bearer " + tokenResponse.accessToken());
 
             return new RsData<>("200-2", "로그인 상태가 복구되었습니다.", new AuthRestoreResponse(true));
         } catch (ServiceException e) {
             if (e.getErrorCode() == ErrorCode.AUTH_REFRESH_TOKEN_ROTATION_FAILED) {
+                throw e;
+            }
+
+            if (e.getErrorCode() == ErrorCode.AUTH_REFRESH_TOKEN_MISMATCH) {
+                log.warn(
+                        "Refresh token mismatch detected during restore. clientIp={}, userAgent={}",
+                        requestContext.getClientIp(),
+                        requestContext.getHeader("User-Agent", "")
+                );
                 throw e;
             }
 
