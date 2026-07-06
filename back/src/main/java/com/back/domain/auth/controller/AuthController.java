@@ -1,5 +1,6 @@
 package com.back.domain.auth.controller;
 
+import com.back.domain.auth.dto.AuthRestoreResponse;
 import com.back.domain.auth.dto.LoginRequest;
 import com.back.domain.auth.dto.TokenResponse;
 import com.back.domain.auth.service.AuthService;
@@ -73,5 +74,21 @@ public class AuthController {
                 "200-1",
                 "Access Token이 정상적으로 재발급되었습니다."
         );
+    }
+
+    @PostMapping("/restore")
+    public RsData<AuthRestoreResponse> restore() {
+        String refreshToken = requestContext.getCookieValue("refreshToken", "");
+
+        try {
+            TokenResponse tokenResponse = authService.refresh(refreshToken);
+            requestContext.setCookie("refreshToken", tokenResponse.refreshToken(), "/api/v1/auth");
+            requestContext.setHeader("Authorization", "Bearer " + tokenResponse.accessToken());
+
+            return new RsData<>("200-2", "로그인 상태가 복구되었습니다.", new AuthRestoreResponse(true));
+        } catch (ServiceException e) {
+            requestContext.deleteCookie("refreshToken", "/api/v1/auth");
+            return new RsData<>("200-1", "비로그인 상태입니다.", new AuthRestoreResponse(false));
+        }
     }
 }
