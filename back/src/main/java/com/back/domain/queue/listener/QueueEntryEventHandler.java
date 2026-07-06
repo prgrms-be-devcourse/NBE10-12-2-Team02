@@ -12,10 +12,10 @@ import org.springframework.stereotype.Component;
 
 @Component
 @RequiredArgsConstructor
+@Async
 public class QueueEntryEventHandler {
     private final SimpMessagingTemplate messagingTemplate;
 
-    @Async
     @EventListener
     public void handleQueueRankUpdated(QueueRankUpdatedEvent event) {
         QueueEventResponse<QueueRankUpdatedEvent> response =
@@ -28,7 +28,6 @@ public class QueueEntryEventHandler {
         );
     }
 
-    @Async
     @EventListener
     public void handleEntryAllowed(EntryAllowedEvent event) {
         QueueEventResponse<EntryAllowedEvent> response =

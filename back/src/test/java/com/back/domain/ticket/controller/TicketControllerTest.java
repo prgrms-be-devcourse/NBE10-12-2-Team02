@@ -125,13 +125,12 @@ class TicketControllerTest {
         String requestBody = """
                 {
                   "concertId": %d,
-                  "scheduleId": %d,
                   "seatNumber": "A-1",
                   "occupyToken": "test-token"
                 }
-                """.formatted(concert.getConcertId(), schedule.getScheduleId());
+                """.formatted(concert.getConcertId());
 
-        mockMvc.perform(post("/api/v1/tickets/reserve")
+        mockMvc.perform(post("/api/v1/tickets/reserve/schedule/{schellingId}", schedule.getScheduleId())
                         .header("X-Queue-Token", "test-queue-token")
                         .with(user(securityUser))
                         .contentType(MediaType.APPLICATION_JSON)
