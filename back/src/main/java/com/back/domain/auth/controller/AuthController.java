@@ -88,6 +88,10 @@ public class AuthController {
 
             return new RsData<>("200-2", "로그인 상태가 복구되었습니다.", new AuthRestoreResponse(true));
         } catch (ServiceException e) {
+            if (e.getErrorCode() == ErrorCode.AUTH_REFRESH_TOKEN_ROTATION_FAILED) {
+                throw e;
+            }
+
             requestContext.deleteCookie("refreshToken", "/api/v1/auth");
             return new RsData<>("200-1", "비로그인 상태입니다.", new AuthRestoreResponse(false));
         }
