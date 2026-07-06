@@ -49,7 +49,7 @@ public class SecurityConfig {
                                         "/api/*/auth/logout",
                                         "/api/*/auth/refresh",
                                         "/api/*/users/signup",
-                                        "/api/*/users/signup"
+                                        "/api/*/auth/restore"
                                 ).permitAll()
                                 .requestMatchers("/api/*/**").authenticated()
                                 .anyRequest().permitAll()
