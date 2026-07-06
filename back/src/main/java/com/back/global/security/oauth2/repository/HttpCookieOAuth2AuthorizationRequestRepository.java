@@ -48,7 +48,7 @@ public class HttpCookieOAuth2AuthorizationRequestRepository
             return;
         }
 
-        requestContext.setCookie(
+        requestContext.setCookieWithMaxAge(
                 OAUTH2_COOKIE_NAME,
                 serialize(authorizationRequest),
                 OAUTH2_COOKIE_PATH,

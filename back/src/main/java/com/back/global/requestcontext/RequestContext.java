@@ -58,7 +58,7 @@ public class RequestContext {
                 .orElse(defaultValue);
     }
 
-    public void setCookie(String name, String value, String path, int maxAge) {
+    public void setCookieWithMaxAge(String name, String value, String path, int maxAge) {
         if (value == null) value = "";
 
         Cookie cookie = new Cookie(name, value);
@@ -74,7 +74,7 @@ public class RequestContext {
     }
 
     public void setCookie(String name, String value, String path) {
-        setCookie(name, value, path, refreshTokenExpireSeconds);
+        setCookieWithMaxAge(name, value, path, refreshTokenExpireSeconds);
     }
 
     public void deleteCookie(String name, String path) {
