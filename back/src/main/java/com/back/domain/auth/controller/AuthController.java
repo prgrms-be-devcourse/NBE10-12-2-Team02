@@ -77,6 +77,7 @@ public class AuthController {
     }
 
     @PostMapping("/restore")
+    @Operation(summary = "새로고침", description = "새로고침 API")
     public RsData<AuthRestoreResponse> restore() {
         String refreshToken = requestContext.getCookieValue("refreshToken", "");
 
