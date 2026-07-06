@@ -5,39 +5,75 @@ import com.back.global.exception.ErrorCode;
 import com.back.global.exception.ServiceException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.data.redis.core.script.DefaultRedisScript;
+import org.springframework.data.redis.core.script.RedisScript;
 import org.springframework.stereotype.Component;
+
+import java.util.List;
 
 
 @Component
 @RequiredArgsConstructor
 public class WaitingQueueManager {
     private final StringRedisTemplate redisTemplate;
+    private static final String WAIT_KEY_PREFIX = "queue:wait:schedule:";
+    private static final String SEQUENCE_KEY_PREFIX = "queue:wait:sequence:schedule:";
 
-    //TODO 현재는 이미 등록된 사용자가 재요청 해도 Sequence 증가함 -> Lua script로 사용자 없을때만 INCR + ZADD를 묶자
-    public WaitingQueueRegisterResponse registerWaiting(Long concertId,Long scheduleId,Long userId) {
+    public WaitingQueueRegisterResponse registerWaiting(Long scheduleId,Long userId) {
         String waitKey = generateWaitKey(scheduleId);
         String seqKey = generateSequenceKey(scheduleId);
         String user = userId.toString();
 
-        Long sequence = redisTemplate.opsForValue().increment(seqKey);
-        if (sequence == null) {
-           throw new ServiceException(ErrorCode.WAITING_QUEUE_REGISTER_FAILED);
-        }
-        Boolean registered = redisTemplate.opsForZSet()
-                .addIfAbsent(waitKey, user, sequence.doubleValue());
-
-        Long rank = redisTemplate.opsForZSet().rank(waitKey, user);
-        if (rank == null) {
+        List<?> result = redisTemplate.execute(
+                REGISTER_WAITING_SCRIPT,
+                List.of(waitKey, seqKey),
+                user
+        );
+        if (result == null || result.size() < 2) {
             throw new ServiceException(ErrorCode.WAITING_QUEUE_REGISTER_FAILED);
         }
-        return new WaitingQueueRegisterResponse(concertId, scheduleId, userId, rank + 1,
-                Boolean.TRUE.equals(registered));
+
+        Long rank = ((Number) result.get(0)).longValue();
+        boolean registered = ((Number) result.get(1)).longValue() == 1L;
+
+        if (rank < 1) {
+            throw new ServiceException(ErrorCode.WAITING_QUEUE_REGISTER_FAILED);
+        }
+        //TODO 코드 컨벤션으로 해당 부분도 of()로 통일할지 논의 필요
+        return new WaitingQueueRegisterResponse(
+                scheduleId,
+                userId,
+                rank,
+                registered
+        );
     }
 
     private String generateWaitKey(Long scheduleId) {
-        return "queue:wait:schedule:" + scheduleId;
+        return WAIT_KEY_PREFIX + scheduleId;
     }
     private String generateSequenceKey(Long scheduleId) {
-        return "queue:wait:seq:schedule:" + scheduleId;
+        return SEQUENCE_KEY_PREFIX + scheduleId;
     }
+    private static final RedisScript<List> REGISTER_WAITING_SCRIPT = new DefaultRedisScript<>(
+            """
+            local exists = redis.call('ZSCORE', KEYS[1], ARGV[1])
+            local registered = 0
+  
+            if not exists then
+              local sequence = redis.call('INCR', KEYS[2])
+              redis.call('ZADD', KEYS[1], sequence, ARGV[1])
+              registered = 1
+            end
+  
+            local rank = redis.call('ZRANK', KEYS[1], ARGV[1])
+  
+            if not rank then
+              return {-1, registered}
+            end
+  
+            return {rank + 1, registered}
+            """,
+            List.class
+    );
+
 }

@@ -23,6 +23,6 @@ public class WaitingQueueService {
                 .orElseThrow(() -> new ServiceException(ErrorCode.USER_NOT_FOUND));
 
         concertService.validateConcertScheduleMatch(concertId, scheduleId);
-        return waitingQueueManager.registerWaiting(concertId, scheduleId, userId);
+        return waitingQueueManager.registerWaiting(scheduleId, userId);
     }
 }
