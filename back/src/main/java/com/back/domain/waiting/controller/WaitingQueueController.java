@@ -10,6 +10,8 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @ApiV1
 @RestController
 @RequestMapping("/waiting")
@@ -60,5 +62,17 @@ public class WaitingQueueController {
         );
 
         return new RsData<>("200-1", "대기열 취소 성공");
+    }
+
+    @PostMapping("/concerts/{concertId}/schedules/{scheduleId}/waiting-queue/entries")
+    @Operation(summary = "대기열 입장 허용", description = "대기열 입장 허용 API")
+    public RsData<List<Long>> allowEntry(
+            @PathVariable Long concertId,
+            @PathVariable Long scheduleId,
+            @RequestParam int count
+    ) {
+        List<Long> userIds = waitingQueueService.allowEntry(concertId, scheduleId, count);
+
+        return new RsData<>("200-1", "대기열 입장 허용 성공", userIds);
     }
 }
