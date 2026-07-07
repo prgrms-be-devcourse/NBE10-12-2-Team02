@@ -67,7 +67,7 @@ class ConcertServiceTest {
         Venue venue = venueRepository.save(Venue.create("올림픽체조경기장", "서울", 15000L));
         schedule = scheduleRepository.save(Schedule.create(concert, venue, LocalDateTime.now().plusHours(12), 1));
 
-        for (int i = 1; i <= 300; i++) {
+        for (int i = 1; i <= 100; i++) {
             ScheduleSeat createdSeat = scheduleSeatRepository.save(ScheduleSeat.create(schedule, "VIP", "A-" + i, 150000, SeatStatus.AVAILABLE));
             if (i == 1) {
                 this.seat = createdSeat;
