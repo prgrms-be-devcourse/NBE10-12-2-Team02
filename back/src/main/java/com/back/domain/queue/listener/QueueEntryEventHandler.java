@@ -21,8 +21,7 @@ public class QueueEntryEventHandler {
         QueueEventResponse<QueueRankUpdatedEvent> response =
                 QueueEventResponse.of(QueueEventType.QUEUE_RANK_UPDATED, event);
 
-        messagingTemplate.convertAndSendToUser(
-                event.userId().toString(),
+        messagingTemplate.convertAndSend(
                 "/queue/schedules/%s/status".formatted(event.scheduleId()),
                 response
         );
@@ -34,7 +33,7 @@ public class QueueEntryEventHandler {
                 QueueEventResponse.of(QueueEventType.ENTRY_ALLOWED, event);
 
         messagingTemplate.convertAndSendToUser(
-                event.scheduleId().toString(),
+                event.userId().toString(),
                 "/queue/schedules/%s/entry".formatted(event.scheduleId()),
                 response
         );
