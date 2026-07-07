@@ -1,4 +1,4 @@
-package com.back.global;
+package com.back.domain.auth.controller;
 
 import com.back.domain.auth.dto.TokenResponse;
 import com.back.domain.auth.service.AuthService;
