@@ -9,12 +9,14 @@ import com.back.domain.schedule.repository.ScheduleSeatRepository;
 import com.back.domain.ticket.dto.PaymentTicketRequest;
 import com.back.domain.ticket.dto.PaymentTicketResponse;
 import com.back.domain.ticket.entity.Ticket;
+import com.back.domain.ticket.event.PaymentCompletedEvent;
 import com.back.domain.ticket.repository.TicketRepository;
 import com.back.domain.user.entity.User;
 import com.back.domain.user.repository.UserRepository;
 import com.back.global.exception.ErrorCode;
 import com.back.global.exception.ServiceException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -31,7 +33,7 @@ public class TicketService {
     private final ScheduleRepository scheduleRepository;
     private final ScheduleSeatRepository scheduleSeatRepository;
     private final StringRedisTemplate redisTemplate;
-
+    private final ApplicationEventPublisher eventPublisher;
     @Transactional
     public PaymentTicketResponse createTicket(Long userId, Long scheduleId, PaymentTicketRequest request) {
         User user = userRepository.findByUserIdAndDeletedAtIsNull(userId)
@@ -63,6 +65,13 @@ public class TicketService {
         );
 
         ticketRepository.save(ticket);
+
+        eventPublisher.publishEvent(
+                new PaymentCompletedEvent(
+                        scheduleId,
+                        userId
+                )
+        );
 
         return PaymentTicketResponse.from(scheduleSeat,schedule,ticket);
     }

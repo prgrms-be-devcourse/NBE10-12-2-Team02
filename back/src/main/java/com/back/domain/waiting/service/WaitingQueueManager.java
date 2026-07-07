@@ -129,7 +129,15 @@ public class WaitingQueueManager {
     public long countActiveUsers(Long scheduleId) {
         String activeKey = QueueInterceptor.generateQueueActiveKey(scheduleId);
 
-        Long size = redisTemplate.opsForZSet().zCard(activeKey);
+        redisTemplate.opsForZSet()
+                .removeRangeByScore(
+                        activeKey,
+                        0,
+                        System.currentTimeMillis()
+                );
+
+        Long size = redisTemplate.opsForZSet()
+                .zCard(activeKey);
 
         return size == null ? 0L : size;
     }
@@ -149,7 +157,8 @@ public class WaitingQueueManager {
 
         redisTemplate.opsForValue().set(
                 generateActiveTokenKey(scheduleId, userId),
-                entryToken
+                entryToken,
+                ttl
         );
 
         return new ActiveEntry(entryToken, expiredAt);
@@ -159,5 +168,26 @@ public class WaitingQueueManager {
             Long userId
     ) {
         return ACTIVE_TOKEN_KEY_PREFIX + scheduleId + ":" + userId;
+    }
+    public void removeActiveUser(
+            Long scheduleId,
+            Long userId
+    ) {
+        String activeTokenKey = generateActiveTokenKey(scheduleId, userId);
+
+        String entryToken = redisTemplate.opsForValue()
+                .get(activeTokenKey);
+
+        if (entryToken == null) {
+            return;
+        }
+
+        redisTemplate.opsForZSet()
+                .remove(
+                        QueueInterceptor.generateQueueActiveKey(scheduleId),
+                        entryToken
+                );
+
+        redisTemplate.delete(activeTokenKey);
     }
 }
