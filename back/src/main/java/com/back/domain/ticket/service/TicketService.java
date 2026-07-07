@@ -13,6 +13,7 @@ import com.back.domain.ticket.event.PaymentCompletedEvent;
 import com.back.domain.ticket.repository.TicketRepository;
 import com.back.domain.user.entity.User;
 import com.back.domain.user.repository.UserRepository;
+import com.back.domain.waiting.service.WaitingQueueService;
 import com.back.global.exception.ErrorCode;
 import com.back.global.exception.ServiceException;
 import lombok.RequiredArgsConstructor;
@@ -33,6 +34,7 @@ public class TicketService {
     private final ScheduleRepository scheduleRepository;
     private final ScheduleSeatRepository scheduleSeatRepository;
     private final StringRedisTemplate redisTemplate;
+    private final WaitingQueueService waitingQueueService;
     private final ApplicationEventPublisher eventPublisher;
     @Transactional
     public PaymentTicketResponse createTicket(Long userId, Long scheduleId, PaymentTicketRequest request) {
@@ -68,6 +70,7 @@ public class TicketService {
 
         eventPublisher.publishEvent(
                 new PaymentCompletedEvent(
+                        request.concertId(),
                         scheduleId,
                         userId
                 )
