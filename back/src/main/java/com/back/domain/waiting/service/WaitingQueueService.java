@@ -5,19 +5,17 @@ import com.back.domain.queue.event.EntryAllowedEvent;
 import com.back.domain.schedule.entity.SeatStatus;
 import com.back.domain.schedule.repository.ScheduleSeatRepository;
 import com.back.domain.user.repository.UserRepository;
+import com.back.domain.waiting.dto.ActiveEntry;
 import com.back.domain.waiting.dto.WaitingQueueResponse;
 import com.back.global.exception.ErrorCode;
 import com.back.global.exception.ServiceException;
-import com.back.global.security.interceptor.QueueInterceptor;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 
 import java.time.Duration;
 import java.util.List;
-import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -25,7 +23,6 @@ public class WaitingQueueService {
     private final WaitingQueueManager waitingQueueManager;
     private final UserRepository userRepository;
     private final ConcertService concertService;
-    private final StringRedisTemplate redisTemplate;
     private final ApplicationEventPublisher eventPublisher;
     private final ScheduleSeatRepository scheduleSeatRepository;
 
@@ -92,18 +89,21 @@ public class WaitingQueueService {
         List<Long> userIds = waitingQueueManager.popUsers(scheduleId, count);
 
         for (Long userId : userIds) {
-            String entryToken = UUID.randomUUID().toString();
-            long expiredAt = System.currentTimeMillis() + entryTokenTtl.toMillis();
 
-            //TODO 사용자별 토큰 검증이나 만료 처리 구현시 activeQueue -> entryToken기준으로 변경
-            redisTemplate.opsForZSet().add(
-                    QueueInterceptor.generateQueueActiveKey(scheduleId),
-                    entryToken,
-                    expiredAt
-            );
+            ActiveEntry activeEntry =
+                    waitingQueueManager.addActiveUser(
+                            scheduleId,
+                            userId,
+                            entryTokenTtl
+                    );
 
             eventPublisher.publishEvent(
-                    new EntryAllowedEvent(scheduleId, userId, entryToken, expiredAt)
+                    new EntryAllowedEvent(
+                            scheduleId,
+                            userId,
+                            activeEntry.entryToken(),
+                            activeEntry.expiredAt()
+                    )
             );
         }
 

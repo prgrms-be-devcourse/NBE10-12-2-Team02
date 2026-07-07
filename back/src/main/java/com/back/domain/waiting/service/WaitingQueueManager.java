@@ -1,5 +1,6 @@
 package com.back.domain.waiting.service;
 
+import com.back.domain.waiting.dto.ActiveEntry;
 import com.back.global.exception.ErrorCode;
 import com.back.global.exception.ServiceException;
 import com.back.global.security.interceptor.QueueInterceptor;
@@ -9,7 +10,9 @@ import org.springframework.data.redis.core.script.DefaultRedisScript;
 import org.springframework.data.redis.core.script.RedisScript;
 import org.springframework.stereotype.Component;
 
+import java.time.Duration;
 import java.util.List;
+import java.util.UUID;
 
 
 @Component
@@ -18,6 +21,7 @@ public class WaitingQueueManager {
     private final StringRedisTemplate redisTemplate;
     private static final String WAIT_KEY_PREFIX = "queue:wait:schedule:";
     private static final String SEQUENCE_KEY_PREFIX = "queue:wait:sequence:schedule:";
+    private static final String ACTIVE_TOKEN_KEY_PREFIX = "queue:active:token:";
 
     public Long registerWaiting(Long scheduleId, Long userId) {
         String waitKey = generateWaitKey(scheduleId);
@@ -128,5 +132,32 @@ public class WaitingQueueManager {
         Long size = redisTemplate.opsForZSet().zCard(activeKey);
 
         return size == null ? 0L : size;
+    }
+    public ActiveEntry addActiveUser(
+            Long scheduleId,
+            Long userId,
+            Duration ttl
+    ) {
+        String entryToken = UUID.randomUUID().toString();
+        long expiredAt = System.currentTimeMillis() + ttl.toMillis();
+
+        redisTemplate.opsForZSet().add(
+                QueueInterceptor.generateQueueActiveKey(scheduleId),
+                entryToken,
+                expiredAt
+        );
+
+        redisTemplate.opsForValue().set(
+                generateActiveTokenKey(scheduleId, userId),
+                entryToken
+        );
+
+        return new ActiveEntry(entryToken, expiredAt);
+    }
+    private String generateActiveTokenKey(
+            Long scheduleId,
+            Long userId
+    ) {
+        return ACTIVE_TOKEN_KEY_PREFIX + scheduleId + ":" + userId;
     }
 }
