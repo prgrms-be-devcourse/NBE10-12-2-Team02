@@ -16,6 +16,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.data.redis.core.script.RedisScript;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 
@@ -26,6 +27,9 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.Mockito.doAnswer;
 
 @ActiveProfiles("test")
 @SpringBootTest
@@ -75,16 +79,16 @@ class ConcertServiceTest {
             redisTemplate.delete(keys);
         }
 
-//        doAnswer(invocation -> {
-//            Thread.sleep(10);
-//            return invocation.callRealMethod();
-//        }).when(redisTemplate).execute(
-//                any(RedisScript.class),
-//                anyList(),
-//                any(Object.class),
-//                any(Object.class),
-//                any(Object.class)
-//        );
+        doAnswer(invocation -> {
+            Thread.sleep(10);
+            return invocation.callRealMethod();
+        }).when(redisTemplate).execute(
+                any(RedisScript.class),
+                anyList(),
+                any(Object.class),
+                any(Object.class),
+                any(Object.class)
+        );
     }
 
     @Test
@@ -166,7 +170,7 @@ class ConcertServiceTest {
     @Test
     @DisplayName("조회 총 소요 시간 측정 테스트")
     void pipeliningBenchmark() {
-        int requestCount = 300;
+        int requestCount = 100;
 
         long startTime = System.currentTimeMillis();
         Long userId = 1L;
