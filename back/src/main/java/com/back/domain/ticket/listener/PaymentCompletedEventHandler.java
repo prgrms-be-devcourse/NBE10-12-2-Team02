@@ -19,7 +19,6 @@ public class PaymentCompletedEventHandler {
     @TransactionalEventListener(
             phase = TransactionPhase.AFTER_COMMIT
     )
-    @EventListener
     public void handlePaymentCompleted(
             PaymentCompletedEvent event
     ) {
