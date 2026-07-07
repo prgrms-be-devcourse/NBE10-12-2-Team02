@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef, type ChangeEvent } from "react";
+import { Suspense, useState, useEffect, useRef, type ChangeEvent } from "react";
 import Link from "next/link";
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import { Search, ChevronLeft, ChevronRight } from "lucide-react";
@@ -35,7 +35,7 @@ interface ConcertDetailResponse {
   urlPoster: string;
 }
 
-export default function Home() {
+function HomeContent() {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -430,5 +430,13 @@ export default function Home() {
         )}
       </div>
     </div>
+  );
+}
+
+export default function Home() {
+  return (
+    <Suspense fallback={<div>로딩 중...</div>}>
+      <HomeContent />
+    </Suspense>
   );
 }
