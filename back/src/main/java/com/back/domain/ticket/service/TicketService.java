@@ -10,6 +10,7 @@ import com.back.domain.ticket.dto.PaymentTicketRequest;
 import com.back.domain.ticket.dto.PaymentTicketResponse;
 import com.back.domain.ticket.entity.Ticket;
 import com.back.domain.ticket.event.PaymentCompletedEvent;
+import com.back.domain.ticket.event.TicketCancelledEvent;
 import com.back.domain.ticket.repository.TicketRepository;
 import com.back.domain.user.entity.User;
 import com.back.domain.user.repository.UserRepository;
@@ -96,6 +97,10 @@ public class TicketService {
                 ticket.getSchedule().getScheduleId(),
                 ticket.getScheduleSeat().getSeatNumber()
         );
+        eventPublisher.publishEvent(new TicketCancelledEvent(
+                ticket.getSchedule().getConcert().getConcertId(),
+                ticket.getSchedule().getScheduleId()
+        ));
     }
 
     public String createTicketNumber() {
