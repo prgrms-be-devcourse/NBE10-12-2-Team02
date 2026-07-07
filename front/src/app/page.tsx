@@ -65,6 +65,9 @@ function HomeContent() {
 
   useEffect(() => {
     const page = Number(searchParams.get("page"));
+    // 주소창의 ?page= 값이 바뀔 때마다(뒤로가기 포함) 화면 페이지 번호를 맞춰주는 로직이라
+    // effect 안에서 setState를 쓰는 게 맞는 경우다.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setCurrentPage(page > 0 ? page : 1);
   }, [searchParams]);
 
