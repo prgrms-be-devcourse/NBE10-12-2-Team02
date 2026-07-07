@@ -163,7 +163,7 @@ public class WaitingQueueManager {
 
         return new ActiveEntry(entryToken, expiredAt);
     }
-    private String generateActiveTokenKey(
+    public static String generateActiveTokenKey(
             Long scheduleId,
             Long userId
     ) {
