@@ -88,5 +88,36 @@ public class WaitingQueueManager {
             """,
             Long.class
     );
+    public List<Long> popUsers(Long scheduleId, int count) {
+        String waitKey = generateWaitKey(scheduleId);
 
+        List<String> userIds = redisTemplate.execute(
+                POP_USERS_SCRIPT,
+                List.of(waitKey),
+                String.valueOf(count)
+        );
+
+        if (userIds == null || userIds.isEmpty()) {
+            return List.of();
+        }
+
+        return userIds.stream()
+                .map(Long::valueOf)
+                .toList();
+    }
+
+    private static final RedisScript<List> POP_USERS_SCRIPT = new DefaultRedisScript<>(
+            """
+            local users = redis.call('ZRANGE', KEYS[1], 0, tonumber(ARGV[1]) - 1)
+  
+            if #users == 0 then
+              return {}
+            end
+  
+            redis.call('ZREM', KEYS[1], unpack(users))
+  
+            return users
+            """,
+            List.class
+    );
 }

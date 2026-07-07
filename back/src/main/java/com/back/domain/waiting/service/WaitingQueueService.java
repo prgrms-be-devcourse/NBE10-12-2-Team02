@@ -8,6 +8,8 @@ import com.back.global.exception.ServiceException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+
 @Service
 @RequiredArgsConstructor
 public class WaitingQueueService {
@@ -49,6 +51,16 @@ public class WaitingQueueService {
 
         waitingQueueManager.cancelWaiting(scheduleId, userId);
     }
+    public List<Long> popUsers(Long concertId, Long scheduleId, int count) {
+        concertService.validateConcertScheduleMatch(concertId, scheduleId);
+
+        if (count <= 0) {
+            throw new ServiceException(ErrorCode.BAD_REQUEST);
+        }
+
+        return waitingQueueManager.popUsers(scheduleId, count);
+    }
+
 
     private void validateUser(Long userId) {
         userRepository.findByUserIdAndDeletedAtIsNull(userId)
