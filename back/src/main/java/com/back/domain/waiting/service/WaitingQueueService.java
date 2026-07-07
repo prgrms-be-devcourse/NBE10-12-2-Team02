@@ -2,6 +2,7 @@ package com.back.domain.waiting.service;
 
 import com.back.domain.concert.service.ConcertService;
 import com.back.domain.queue.event.EntryAllowedEvent;
+import com.back.domain.queue.event.QueueRankUpdatedEvent;
 import com.back.domain.schedule.entity.SeatStatus;
 import com.back.domain.schedule.repository.ScheduleSeatRepository;
 import com.back.domain.user.repository.UserRepository;
@@ -106,6 +107,10 @@ public class WaitingQueueService {
                     )
             );
         }
+        long remaining = waitingQueueManager.getRemainingCount(scheduleId);
+        eventPublisher.publishEvent(
+                QueueRankUpdatedEvent.of(scheduleId, -1L, -1L, remaining)
+        );
 
         return userIds;
     }

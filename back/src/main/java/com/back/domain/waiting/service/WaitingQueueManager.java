@@ -190,4 +190,8 @@ public class WaitingQueueManager {
 
         redisTemplate.delete(activeTokenKey);
     }
+    public long getRemainingCount(Long scheduleId) {
+        Long count = redisTemplate.opsForZSet().zCard(generateWaitKey(scheduleId));
+        return count == null ? 0L : count;
+    }
 }
