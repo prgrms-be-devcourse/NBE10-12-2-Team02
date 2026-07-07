@@ -2,6 +2,8 @@ package com.back.domain.waiting.service;
 
 import com.back.domain.concert.service.ConcertService;
 import com.back.domain.queue.event.EntryAllowedEvent;
+import com.back.domain.schedule.entity.SeatStatus;
+import com.back.domain.schedule.repository.ScheduleSeatRepository;
 import com.back.domain.user.repository.UserRepository;
 import com.back.domain.waiting.dto.WaitingQueueResponse;
 import com.back.global.exception.ErrorCode;
@@ -25,9 +27,12 @@ public class WaitingQueueService {
     private final ConcertService concertService;
     private final StringRedisTemplate redisTemplate;
     private final ApplicationEventPublisher eventPublisher;
+    private final ScheduleSeatRepository scheduleSeatRepository;
 
     @Value("${queue.entry-token.ttl}")
     private Duration entryTokenTtl;
+    @Value("${queue.batch-size}")
+    private int batchSize;
 
     public WaitingQueueResponse registerWaiting(Long concertId, Long scheduleId, Long userId) {
         validateUser(userId);
@@ -64,11 +69,24 @@ public class WaitingQueueService {
         waitingQueueManager.cancelWaiting(scheduleId, userId);
     }
 
-    public List<Long> allowEntry(Long concertId, Long scheduleId, int count) {
+    public List<Long> allowEntry(Long concertId, Long scheduleId) {
+
         concertService.validateConcertScheduleMatch(concertId, scheduleId);
 
-        if (count <= 0) {
-            throw new ServiceException(ErrorCode.BAD_REQUEST);
+        long remainingSeats =
+                scheduleSeatRepository.countBySchedule_ScheduleIdAndSeatStatus(
+                        scheduleId,
+                        SeatStatus.AVAILABLE
+                );
+
+        long activeUsers = waitingQueueManager.countActiveUsers(scheduleId);
+
+        long availableSlots = Math.max(0, remainingSeats - activeUsers);
+
+        int count = (int) Math.min(availableSlots, batchSize);
+
+        if (count == 0) {
+            return List.of();
         }
 
         List<Long> userIds = waitingQueueManager.popUsers(scheduleId, count);
@@ -77,6 +95,7 @@ public class WaitingQueueService {
             String entryToken = UUID.randomUUID().toString();
             long expiredAt = System.currentTimeMillis() + entryTokenTtl.toMillis();
 
+            //TODO 사용자별 토큰 검증이나 만료 처리 구현시 activeQueue -> entryToken기준으로 변경
             redisTemplate.opsForZSet().add(
                     QueueInterceptor.generateQueueActiveKey(scheduleId),
                     entryToken,

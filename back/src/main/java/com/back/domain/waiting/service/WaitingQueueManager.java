@@ -2,6 +2,7 @@ package com.back.domain.waiting.service;
 
 import com.back.global.exception.ErrorCode;
 import com.back.global.exception.ServiceException;
+import com.back.global.security.interceptor.QueueInterceptor;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.script.DefaultRedisScript;
@@ -120,4 +121,12 @@ public class WaitingQueueManager {
             """,
             List.class
     );
+
+    public long countActiveUsers(Long scheduleId) {
+        String activeKey = QueueInterceptor.generateQueueActiveKey(scheduleId);
+
+        Long size = redisTemplate.opsForZSet().zCard(activeKey);
+
+        return size == null ? 0L : size;
+    }
 }

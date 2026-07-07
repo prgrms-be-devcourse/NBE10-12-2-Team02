@@ -43,7 +43,7 @@ public class QueueInterceptor implements HandlerInterceptor {
         }
         return true;
     }
-
+    //TODO 추후 RedisKey 관리 책임을 갖는 클래스로 분리 필요
     public static String generateQueueActiveKey(Long scheduleId) {
         return "queue:active:schedule:%d".formatted(scheduleId);
     }

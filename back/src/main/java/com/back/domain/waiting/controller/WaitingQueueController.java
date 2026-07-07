@@ -65,13 +65,12 @@ public class WaitingQueueController {
     }
 
     @PostMapping("/concerts/{concertId}/schedules/{scheduleId}/waiting-queue/entries")
-    @Operation(summary = "대기열 입장 허용", description = "대기열 입장 허용 API")
+    @Operation(summary = "대기열 입장 허용", description = "대기열 입장 허용 - 테스트용 API")
     public RsData<List<Long>> allowEntry(
             @PathVariable Long concertId,
-            @PathVariable Long scheduleId,
-            @RequestParam int count
+            @PathVariable Long scheduleId
     ) {
-        List<Long> userIds = waitingQueueService.allowEntry(concertId, scheduleId, count);
+        List<Long> userIds = waitingQueueService.allowEntry(concertId, scheduleId);
 
         return new RsData<>("200-1", "대기열 입장 허용 성공", userIds);
     }
