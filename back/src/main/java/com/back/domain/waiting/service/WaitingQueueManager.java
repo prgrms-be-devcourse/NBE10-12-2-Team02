@@ -127,20 +127,21 @@ public class WaitingQueueManager {
     );
 
     public long countActiveUsers(Long scheduleId) {
+        removeExpiredActiveUsers(scheduleId);
         String activeKey = QueueInterceptor.generateQueueActiveKey(scheduleId);
-
-        redisTemplate.opsForZSet()
-                .removeRangeByScore(
-                        activeKey,
-                        0,
-                        System.currentTimeMillis()
-                );
-
         Long size = redisTemplate.opsForZSet()
                 .zCard(activeKey);
 
         return size == null ? 0L : size;
     }
+
+    public long removeExpiredActiveUsers(Long scheduleId) {
+        String activeKey = QueueInterceptor.generateQueueActiveKey(scheduleId);
+        Long removed = redisTemplate.opsForZSet()
+                .removeRangeByScore(activeKey, 0, System.currentTimeMillis());
+        return removed == null ? 0L : removed;
+    }
+
     public ActiveEntry addActiveUser(
             Long scheduleId,
             Long userId,
