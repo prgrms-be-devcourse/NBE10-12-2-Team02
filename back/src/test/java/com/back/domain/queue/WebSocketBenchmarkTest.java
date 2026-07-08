@@ -25,7 +25,7 @@ class WebSocketBenchmarkTest {
         // 1. 유니캐스트 방식 측정
         long unicastStartTime = System.nanoTime();
         for (int i = 1; i <= userCount; i++) {
-            QueueStatusEvent event = QueueStatusEvent.of(scheduleId, (long) i, (long) i, (long) userCount);
+            QueueStatusEvent event = QueueStatusEvent.of(scheduleId, (long) i, (long) userCount);
             QueueEventResponse<QueueStatusEvent> response =
                     QueueEventResponse.of(QueueEventType.QUEUE_RANK_UPDATED, event);
 
@@ -40,7 +40,7 @@ class WebSocketBenchmarkTest {
 
         // 2. 브로드캐스트 방식 측정
         long broadcastStartTime = System.nanoTime();
-        QueueStatusEvent broadcastEvent = QueueStatusEvent.of(scheduleId, 0L, 100L, (long) userCount);
+        QueueStatusEvent broadcastEvent = QueueStatusEvent.of(scheduleId, 100L, (long) userCount);
         QueueEventResponse<QueueStatusEvent> response =
                 QueueEventResponse.of(QueueEventType.QUEUE_RANK_UPDATED, broadcastEvent);
 

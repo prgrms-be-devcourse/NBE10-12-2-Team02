@@ -28,6 +28,7 @@ public class WaitingQueueManager {
         String waitKey = generateWaitKey(scheduleId);
         String seqKey = generateSequenceKey(scheduleId);
         String user = userId.toString();
+        redisTemplate.opsForSet().add("queue:active:schedules", scheduleId.toString());
 
         Long rank = redisTemplate.execute(
                 REGISTER_WAITING_SCRIPT,
