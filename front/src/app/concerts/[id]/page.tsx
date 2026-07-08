@@ -2,7 +2,7 @@
 
 import { useState, useEffect, use } from "react";
 import { useRouter } from "next/navigation";
-import { apiFetch, decodeToken } from "@/lib/api";
+import { apiFetch, decodeToken, restoreSession } from "@/lib/api";
 import { showAlert } from "@/lib/alert";
 import { getConcertDetailImages, getLocalConcertPoster } from "@/lib/concertDetailImages";
 
@@ -66,6 +66,7 @@ export default function ConcertDetailPage({
   }, [id]);
 
   const handleBookingClick = async () => {
+    await restoreSession();
     if (!decodeToken()) {
       await showAlert("로그인이 필요합니다.");
       router.replace("/login");
