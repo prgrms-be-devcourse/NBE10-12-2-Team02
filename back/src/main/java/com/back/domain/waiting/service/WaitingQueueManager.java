@@ -12,6 +12,7 @@ import org.springframework.stereotype.Component;
 
 import java.time.Duration;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 
@@ -191,8 +192,16 @@ public class WaitingQueueManager {
 
         redisTemplate.delete(activeTokenKey);
     }
-    public long getRemainingCount(Long scheduleId) {
-        Long count = redisTemplate.opsForZSet().zCard(generateWaitKey(scheduleId));
-        return count == null ? 0L : count;
+    public List<Long> getRemainingUserIds(Long scheduleId) {
+        Set<String> userIds = redisTemplate.opsForZSet()
+                .range(generateWaitKey(scheduleId), 0, -1);
+
+        if (userIds == null || userIds.isEmpty()) {
+            return List.of();
+        }
+
+        return userIds.stream()
+                .map(Long::valueOf)
+                .toList();
     }
 }

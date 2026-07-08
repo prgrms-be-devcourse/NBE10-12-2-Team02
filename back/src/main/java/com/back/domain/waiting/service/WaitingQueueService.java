@@ -112,14 +112,23 @@ public class WaitingQueueService {
                     )
             );
         }
+        //TODO 대기인원 많아질 시 Redis조회 부하 이벤트 발생 -> 테스트 후 수정 필요
         if (!userIds.isEmpty()) {
-            long remaining = waitingQueueManager.getRemainingCount(scheduleId);
-            eventPublisher.publishEvent(
-                    QueueRankUpdatedEvent.of(scheduleId, -1L, -1L, remaining)
-            );
+            List<Long> remainingUserIds = waitingQueueManager.getRemainingUserIds(scheduleId);
+
+            for (int i = 0; i < remainingUserIds.size(); i++) {
+                eventPublisher.publishEvent(
+                        QueueRankUpdatedEvent.of(
+                                scheduleId,
+                                remainingUserIds.get(i),
+                                (long) (i + 1),
+                                (long) remainingUserIds.size()
+                        )
+                );
+            }
         }
 
-        return;
+            return;
     }
 
 
