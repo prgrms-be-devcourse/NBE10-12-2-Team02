@@ -6,7 +6,6 @@ import com.back.domain.queue.event.QueueRankUpdatedEvent;
 import com.back.domain.schedule.entity.SeatStatus;
 import com.back.domain.schedule.repository.ScheduleSeatRepository;
 import com.back.domain.user.repository.UserRepository;
-import com.back.domain.waiting.dto.ActiveEntry;
 import com.back.domain.waiting.dto.WaitingQueueResponse;
 import com.back.global.exception.ErrorCode;
 import com.back.global.exception.ServiceException;
