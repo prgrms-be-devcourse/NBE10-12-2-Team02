@@ -107,10 +107,12 @@ public class WaitingQueueService {
                     )
             );
         }
-        long remaining = waitingQueueManager.getRemainingCount(scheduleId);
-        eventPublisher.publishEvent(
-                QueueRankUpdatedEvent.of(scheduleId, -1L, -1L, remaining)
-        );
+        if (!userIds.isEmpty()) {
+            long remaining = waitingQueueManager.getRemainingCount(scheduleId);
+            eventPublisher.publishEvent(
+                    QueueRankUpdatedEvent.of(scheduleId, -1L, -1L, remaining)
+            );
+        }
 
         return userIds;
     }

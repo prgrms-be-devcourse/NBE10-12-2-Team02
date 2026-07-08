@@ -2,8 +2,9 @@ package com.back.domain.waiting.service;
 
 import com.back.domain.schedule.entity.Schedule;
 import com.back.domain.schedule.repository.ScheduleRepository;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
@@ -14,12 +15,13 @@ import java.util.Set;
 public class WaitingQueueScheduler {
     private final WaitingQueueService waitingQueueService;
     private final WaitingQueueManager waitingQueueManager;
-    private final RedisTemplate redisTemplate;
+    private final StringRedisTemplate stringRedisTemplate;
     private final ScheduleRepository scheduleRepository;
 
     @Scheduled(fixedDelay = 30000)
+    @Transactional
     public void processExpiredActiveUsers() {
-        Set<String> keys = redisTemplate.keys("queue:active:schedule:*");
+        Set<String> keys = stringRedisTemplate.keys("queue:active:schedule:*");
         if (keys == null || keys.isEmpty()) return;
 
         for (String key : keys) {
