@@ -77,6 +77,8 @@ public class WaitingQueueService {
 
         if (removedFromActive) {
             allowEntry(concertId, scheduleId);
+        } else {
+            publishQueueRank(scheduleId);
         }
     }
 
@@ -99,18 +101,7 @@ public class WaitingQueueService {
                     new EntryAllowedEvent(scheduleId, userId, entryToken, expiredAt)
             );
         }
-
-        if (!userIds.isEmpty()) {
-            List<Long> remainingUserIds = waitingQueueManager.getRemainingUserIds(scheduleId);
-            for (int i = 0; i < remainingUserIds.size(); i++) {
-                eventPublisher.publishEvent(
-                        QueueRankUpdatedEvent.of(
-                                scheduleId, remainingUserIds.get(i),
-                                (long) (i + 1), (long) remainingUserIds.size()
-                        )
-                );
-            }
-        }
+        publishQueueRank(scheduleId);
     }
 
     private void publishQueueRank(Long scheduleId) {
