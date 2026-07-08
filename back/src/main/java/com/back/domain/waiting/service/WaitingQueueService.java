@@ -31,12 +31,16 @@ public class WaitingQueueService {
     private Duration entryTokenTtl;
     @Value("${queue.batch-size}")
     private int batchSize;
+    @Value("${queue.max-active-users}")
+    private int maxActiveUsers;
 
     public WaitingQueueResponse registerWaiting(Long concertId, Long scheduleId, Long userId) {
         validateUser(userId);
         concertService.validateConcertScheduleMatch(concertId, scheduleId);
 
         Long rank = waitingQueueManager.registerWaiting(scheduleId, userId);
+
+        allowEntry(concertId, scheduleId);
 
         return WaitingQueueResponse.of(
                 concertId,
@@ -79,7 +83,8 @@ public class WaitingQueueService {
 
         long activeUsers = waitingQueueManager.countActiveUsers(scheduleId);
 
-        long availableSlots = Math.max(0, remainingSeats - activeUsers);
+        long capacity = Math.min(remainingSeats, maxActiveUsers);
+        long availableSlots = Math.max(0, capacity - activeUsers);
 
         int count = (int) Math.min(availableSlots, batchSize);
 
