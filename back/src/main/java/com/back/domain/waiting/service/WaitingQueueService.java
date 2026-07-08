@@ -2,16 +2,17 @@ package com.back.domain.waiting.service;
 
 import com.back.domain.concert.service.ConcertService;
 import com.back.domain.queue.event.EntryAllowedEvent;
-import com.back.domain.queue.event.QueueRankUpdatedEvent;
+import com.back.domain.queue.event.QueueStatusEvent;
 import com.back.domain.schedule.entity.SeatStatus;
 import com.back.domain.schedule.repository.ScheduleSeatRepository;
 import com.back.domain.user.repository.UserRepository;
+import com.back.domain.waiting.dto.QueueStatusDto;
 import com.back.domain.waiting.dto.WaitingQueueResponse;
 import com.back.global.exception.ErrorCode;
 import com.back.global.exception.ServiceException;
 import lombok.RequiredArgsConstructor;
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 
 import java.time.Duration;
@@ -38,6 +39,7 @@ public class WaitingQueueService {
         concertService.validateConcertScheduleMatch(concertId, scheduleId);
 
         Long rank = waitingQueueManager.registerWaiting(scheduleId, userId);
+        Long myQueueNumber = waitingQueueManager.getQueueSequence(scheduleId, userId);
 
         allowEntry(concertId, scheduleId);
 
@@ -45,7 +47,8 @@ public class WaitingQueueService {
                 concertId,
                 scheduleId,
                 userId,
-                rank
+                rank,
+                myQueueNumber
         );
     }
 
@@ -54,12 +57,14 @@ public class WaitingQueueService {
         concertService.validateConcertScheduleMatch(concertId, scheduleId);
 
         Long rank = waitingQueueManager.showWaitingRank(scheduleId, userId);
+        Long myQueueNumber = waitingQueueManager.getQueueSequence(scheduleId, userId);
 
         return WaitingQueueResponse.of(
                 concertId,
                 scheduleId,
                 userId,
-                rank
+                rank,
+                myQueueNumber
         );
     }
 
@@ -105,15 +110,17 @@ public class WaitingQueueService {
     }
 
     private void publishQueueRank(Long scheduleId) {
-        List<Long> remainingUserIds = waitingQueueManager.getRemainingUserIds(scheduleId);
-        for (int i = 0; i < remainingUserIds.size(); i++) {
-            eventPublisher.publishEvent(
-                    QueueRankUpdatedEvent.of(
-                            scheduleId, remainingUserIds.get(i),
-                            (long) (i + 1), (long) remainingUserIds.size()
-                    )
-            );
-        }
+        QueueStatusDto status = waitingQueueManager.getQueueStatus(scheduleId);
+
+        if (status.totalWaitingCount() == 0) return;
+
+        eventPublisher.publishEvent(
+                QueueStatusEvent.of(
+                        scheduleId,
+                        status.currentAllowedSequence(),
+                        status.totalWaitingCount()
+                )
+        );
     }
 
     private void validateUser(Long userId) {

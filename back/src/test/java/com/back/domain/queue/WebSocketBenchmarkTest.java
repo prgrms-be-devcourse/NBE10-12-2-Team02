@@ -2,7 +2,7 @@ package com.back.domain.queue;
 
 import com.back.domain.queue.constant.QueueEventType;
 import com.back.domain.queue.dto.QueueEventResponse;
-import com.back.domain.queue.event.QueueRankUpdatedEvent;
+import com.back.domain.queue.event.QueueStatusEvent;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,8 +25,8 @@ class WebSocketBenchmarkTest {
         // 1. 유니캐스트 방식 측정
         long unicastStartTime = System.nanoTime();
         for (int i = 1; i <= userCount; i++) {
-            QueueRankUpdatedEvent event = QueueRankUpdatedEvent.of(scheduleId, (long) i, (long) i, (long) userCount);
-            QueueEventResponse<QueueRankUpdatedEvent> response =
+            QueueStatusEvent event = QueueStatusEvent.of(scheduleId, (long) i, (long) i, (long) userCount);
+            QueueEventResponse<QueueStatusEvent> response =
                     QueueEventResponse.of(QueueEventType.QUEUE_RANK_UPDATED, event);
 
             messagingTemplate.convertAndSendToUser(
@@ -40,8 +40,8 @@ class WebSocketBenchmarkTest {
 
         // 2. 브로드캐스트 방식 측정
         long broadcastStartTime = System.nanoTime();
-        QueueRankUpdatedEvent broadcastEvent = QueueRankUpdatedEvent.of(scheduleId, 0L, 100L, (long) userCount);
-        QueueEventResponse<QueueRankUpdatedEvent> response =
+        QueueStatusEvent broadcastEvent = QueueStatusEvent.of(scheduleId, 0L, 100L, (long) userCount);
+        QueueEventResponse<QueueStatusEvent> response =
                 QueueEventResponse.of(QueueEventType.QUEUE_RANK_UPDATED, broadcastEvent);
 
         messagingTemplate.convertAndSend(
