@@ -72,63 +72,36 @@ public class WaitingQueueService {
     }
 
     public void allowEntry(Long concertId, Long scheduleId) {
-
         concertService.validateConcertScheduleMatch(concertId, scheduleId);
 
         long remainingSeats =
                 scheduleSeatRepository.countBySchedule_ScheduleIdAndSeatStatus(
-                        scheduleId,
-                        SeatStatus.AVAILABLE
+                        scheduleId, SeatStatus.AVAILABLE
                 );
-
-        long activeUsers = waitingQueueManager.countActiveUsers(scheduleId);
-
         long capacity = Math.min(remainingSeats, maxActiveUsers);
-        long availableSlots = Math.max(0, capacity - activeUsers);
 
-        int count = (int) Math.min(availableSlots, batchSize);
-
-        if (count == 0) {
-            return;
-        }
-
-        List<Long> userIds = waitingQueueManager.popUsers(scheduleId, count);
+        List<Long> userIds = waitingQueueManager.addActiveUser(scheduleId, capacity, batchSize, entryTokenTtl);
 
         for (Long userId : userIds) {
-
-            ActiveEntry activeEntry =
-                    waitingQueueManager.addActiveUser(
-                            scheduleId,
-                            userId,
-                            entryTokenTtl
-                    );
+            String entryToken = waitingQueueManager.issueToken(scheduleId, userId, entryTokenTtl);
+            long expiredAt = System.currentTimeMillis() + entryTokenTtl.toMillis();
 
             eventPublisher.publishEvent(
-                    new EntryAllowedEvent(
-                            scheduleId,
-                            userId,
-                            activeEntry.entryToken(),
-                            activeEntry.expiredAt()
-                    )
+                    new EntryAllowedEvent(scheduleId, userId, entryToken, expiredAt)
             );
         }
-        //TODO 대기인원 많아질 시 Redis조회 부하 이벤트 발생 -> 테스트 후 수정 필요
+
         if (!userIds.isEmpty()) {
             List<Long> remainingUserIds = waitingQueueManager.getRemainingUserIds(scheduleId);
-
             for (int i = 0; i < remainingUserIds.size(); i++) {
                 eventPublisher.publishEvent(
                         QueueRankUpdatedEvent.of(
-                                scheduleId,
-                                remainingUserIds.get(i),
-                                (long) (i + 1),
-                                (long) remainingUserIds.size()
+                                scheduleId, remainingUserIds.get(i),
+                                (long) (i + 1), (long) remainingUserIds.size()
                         )
                 );
             }
         }
-
-            return;
     }
 
 
