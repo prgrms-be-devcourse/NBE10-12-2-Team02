@@ -75,8 +75,8 @@ custom:
       prefix: "auth:refresh:"
       index-prefix: "auth:refresh:index:"
   cookie:
-    secure: false
-    same-site: Lax
+    secure: true
+    same-site: None
 
 app:
   rate-limit:
