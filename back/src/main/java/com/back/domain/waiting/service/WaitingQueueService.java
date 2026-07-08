@@ -67,7 +67,7 @@ public class WaitingQueueService {
         waitingQueueManager.cancelWaiting(scheduleId, userId);
     }
 
-    public List<Long> allowEntry(Long concertId, Long scheduleId) {
+    public void allowEntry(Long concertId, Long scheduleId) {
 
         concertService.validateConcertScheduleMatch(concertId, scheduleId);
 
@@ -84,7 +84,7 @@ public class WaitingQueueService {
         int count = (int) Math.min(availableSlots, batchSize);
 
         if (count == 0) {
-            return List.of();
+            return;
         }
 
         List<Long> userIds = waitingQueueManager.popUsers(scheduleId, count);
@@ -114,7 +114,7 @@ public class WaitingQueueService {
             );
         }
 
-        return userIds;
+        return;
     }
 
 
