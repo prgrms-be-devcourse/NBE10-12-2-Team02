@@ -38,6 +38,11 @@ public class WaitingQueueService {
         validateUser(userId);
         concertService.validateConcertScheduleMatch(concertId, scheduleId);
 
+        String activeToken = waitingQueueManager.getActiveToken(scheduleId, userId);
+        if (activeToken != null) {
+            return WaitingQueueResponse.of(concertId, scheduleId, userId, 0L, 0L, activeToken);
+        }
+
         Long rank = waitingQueueManager.registerWaiting(scheduleId, userId);
         Long myQueueNumber = waitingQueueManager.getQueueSequence(scheduleId, userId);
 
@@ -48,13 +53,19 @@ public class WaitingQueueService {
                 scheduleId,
                 userId,
                 rank,
-                myQueueNumber
+                myQueueNumber,
+                null
         );
     }
 
     public WaitingQueueResponse showWaitingRank(Long concertId, Long scheduleId, Long userId) {
         validateUser(userId);
         concertService.validateConcertScheduleMatch(concertId, scheduleId);
+
+        String activeToken = waitingQueueManager.getActiveToken(scheduleId, userId);
+        if (activeToken != null) {
+            return WaitingQueueResponse.of(concertId, scheduleId, userId, 0L, 0L, activeToken);
+        }
 
         Long rank = waitingQueueManager.showWaitingRank(scheduleId, userId);
         Long myQueueNumber = waitingQueueManager.getQueueSequence(scheduleId, userId);
@@ -64,7 +75,8 @@ public class WaitingQueueService {
                 scheduleId,
                 userId,
                 rank,
-                myQueueNumber
+                myQueueNumber,
+                null
         );
     }
 

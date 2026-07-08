@@ -221,4 +221,16 @@ public class WaitingQueueManager {
 
         return (score != null) ? score.longValue() : 0L;
     }
+
+    public String getActiveToken(Long scheduleId, Long userId) {
+        String activeKey = generateQueueActiveKey(scheduleId);
+        String user = userId.toString();
+        Double score = redisTemplate.opsForZSet().score(activeKey, user);
+
+        if (score != null && score > System.currentTimeMillis()) {
+            return redisTemplate.opsForValue()
+                    .get(generateActiveTokenKey(scheduleId, userId));
+        }
+        return null;
+    }
 }

@@ -5,9 +5,10 @@ public record WaitingQueueResponse(
         Long scheduleId,
         Long userId,
         Long rank,
-        Long myQueueNumber
+        Long myQueueNumber,
+        String entryToken
 ) {
-    public static WaitingQueueResponse of(Long concertId, Long scheduleId, Long userId, Long rank, Long myQueueNumber) {
-        return new WaitingQueueResponse(concertId, scheduleId, userId, rank, myQueueNumber);
+    public static WaitingQueueResponse of(Long concertId, Long scheduleId, Long userId, Long rank, Long myQueueNumber, String entryToken) {
+        return new WaitingQueueResponse(concertId, scheduleId, userId, rank, myQueueNumber, entryToken);
     }
 }
