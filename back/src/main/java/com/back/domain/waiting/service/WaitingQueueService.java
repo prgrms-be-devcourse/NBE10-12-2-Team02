@@ -113,6 +113,17 @@ public class WaitingQueueService {
         }
     }
 
+    private void publishQueueRank(Long scheduleId) {
+        List<Long> remainingUserIds = waitingQueueManager.getRemainingUserIds(scheduleId);
+        for (int i = 0; i < remainingUserIds.size(); i++) {
+            eventPublisher.publishEvent(
+                    QueueRankUpdatedEvent.of(
+                            scheduleId, remainingUserIds.get(i),
+                            (long) (i + 1), (long) remainingUserIds.size()
+                    )
+            );
+        }
+    }
 
     private void validateUser(Long userId) {
         userRepository.findByUserIdAndDeletedAtIsNull(userId)
