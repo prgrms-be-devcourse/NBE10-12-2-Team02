@@ -17,9 +17,9 @@ public class QueueEntryEventHandler {
     private final SimpMessagingTemplate messagingTemplate;
 
     @EventListener
-    public void handleQueueRankUpdated(QueueStatusEvent event) {
+    public void handleQueueStatusUpdated(QueueStatusEvent event) {
         QueueEventResponse<QueueStatusEvent> response =
-                QueueEventResponse.of(QueueEventType.QUEUE_RANK_UPDATED, event);
+                QueueEventResponse.of(QueueEventType.QUEUE_STATUS_UPDATED, event);
 
         messagingTemplate.convertAndSend(
                 "/queue/schedules/%s/status".formatted(event.scheduleId()),

@@ -27,7 +27,7 @@ class WebSocketBenchmarkTest {
         for (int i = 1; i <= userCount; i++) {
             QueueStatusEvent event = QueueStatusEvent.of(scheduleId, (long) i, (long) userCount);
             QueueEventResponse<QueueStatusEvent> response =
-                    QueueEventResponse.of(QueueEventType.QUEUE_RANK_UPDATED, event);
+                    QueueEventResponse.of(QueueEventType.QUEUE_STATUS_UPDATED, event);
 
             messagingTemplate.convertAndSendToUser(
                     String.valueOf(i),
@@ -42,7 +42,7 @@ class WebSocketBenchmarkTest {
         long broadcastStartTime = System.nanoTime();
         QueueStatusEvent broadcastEvent = QueueStatusEvent.of(scheduleId, 100L, (long) userCount);
         QueueEventResponse<QueueStatusEvent> response =
-                QueueEventResponse.of(QueueEventType.QUEUE_RANK_UPDATED, broadcastEvent);
+                QueueEventResponse.of(QueueEventType.QUEUE_STATUS_UPDATED, broadcastEvent);
 
         messagingTemplate.convertAndSend(
                 "/queue/schedules/%d/status".formatted(scheduleId),
