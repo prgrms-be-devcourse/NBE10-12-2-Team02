@@ -29,6 +29,7 @@ dependencies {
     implementation("com.github.ben-manes.caffeine:caffeine") // caffeine
     developmentOnly("org.springframework.boot:spring-boot-devtools")
     runtimeOnly("com.h2database:h2")
+    runtimeOnly("com.mysql:mysql-connector-j")
     testImplementation("org.springframework.boot:spring-boot-starter-data-jpa-test")
     testImplementation("org.springframework.boot:spring-boot-starter-validation-test")
     testImplementation("org.springframework.boot:spring-boot-starter-webmvc-test")
@@ -45,6 +46,8 @@ dependencies {
     runtimeOnly("io.jsonwebtoken:jjwt-jackson:0.13.0")
     // Redis
     implementation("org.springframework.boot:spring-boot-starter-data-redis")
+    // OAuth2
+    implementation("org.springframework.boot:spring-boot-starter-oauth2-client")
     testImplementation("org.springframework.boot:spring-boot-starter-data-redis-test")
     testImplementation("com.github.codemonstur:embedded-redis:1.4.3")
     //WebSocket

@@ -1,12 +1,12 @@
 package com.back.global.requestcontext;
 
-import com.back.domain.user.entity.User;
-import com.back.global.exception.ErrorCode;
 import com.back.global.security.SecurityUser;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
@@ -17,8 +17,14 @@ import java.util.Optional;
 @Component
 @RequiredArgsConstructor
 public class RequestContext {
-    private final HttpServletRequest req;
-    private final HttpServletResponse resp;
+    private final ObjectProvider<HttpServletRequest> reqProvider;
+    private final ObjectProvider<HttpServletResponse> respProvider;
+
+    @Value("${custom.jwt.refreshToken.expirationSeconds}")
+    private int refreshTokenExpireSeconds;
+
+    private HttpServletRequest req() { return reqProvider.getObject(); }
+    private HttpServletResponse resp() { return respProvider.getObject(); }
 
     public SecurityUser getActor() {
         return (SecurityUser) Optional.ofNullable(
@@ -32,7 +38,7 @@ public class RequestContext {
 
     public String getHeader(String name, String defaultValue) {
         return Optional
-                .ofNullable(req.getHeader(name))
+                .ofNullable(req().getHeader(name))
                 .filter(headerValue -> !headerValue.isBlank())
                 .orElse(defaultValue);
     }
@@ -41,14 +47,14 @@ public class RequestContext {
         if (value == null) value = "";
 
         if (value.isBlank()) {
-            req.removeAttribute(name);
+            req().removeAttribute(name);
         } else {
-            resp.setHeader(name, value);
+            resp().setHeader(name, value);
         }
     }
 
     public String getCookieValue(String name, String defaultValue) {
-        return Arrays.stream(Optional.ofNullable(req.getCookies()).orElse(new Cookie[0]))
+        return Arrays.stream(Optional.ofNullable(req().getCookies()).orElse(new Cookie[0]))
                 .filter(cookie -> name.equals(cookie.getName()))
                 .map(Cookie::getValue)
                 .filter(value -> value != null && !value.isBlank())
@@ -56,7 +62,7 @@ public class RequestContext {
                 .orElse(defaultValue);
     }
 
-    public void setCookie(String name, String value, String path) {
+    public void setCookieWithMaxAge(String name, String value, String path, int maxAge) {
         if (value == null) value = "";
 
         Cookie cookie = new Cookie(name, value);
@@ -66,12 +72,26 @@ public class RequestContext {
         cookie.setAttribute("SameSite", "Lax");
 
         if (value.isBlank()) cookie.setMaxAge(0);
-        else cookie.setMaxAge(60 * 60 * 24 * 365);
+        else cookie.setMaxAge(maxAge);
 
-        resp.addCookie(cookie);
+        resp().addCookie(cookie);
+    }
+
+    public void setCookie(String name, String value, String path) {
+        setCookieWithMaxAge(name, value, path, refreshTokenExpireSeconds);
     }
 
     public void deleteCookie(String name, String path) {
         setCookie(name, null, path);
+    }
+
+    public String getClientIp() {
+        String forwardedFor = getHeader("X-Forwarded-For", "");
+
+        if (!forwardedFor.isBlank()) {
+            return forwardedFor.split(",")[0].trim();
+        }
+
+        return req().getRemoteAddr();
     }
 }
