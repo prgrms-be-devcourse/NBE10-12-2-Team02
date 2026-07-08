@@ -40,7 +40,7 @@ public class QueueInterceptor implements HandlerInterceptor {
         }
         Long userId = requestContext.getActor().getId();
 
-        String activeQueueKey = generateQueueActiveKey(scheduleId);
+        String activeQueueKey = WaitingQueueManager.generateQueueActiveKey(scheduleId);
         Double score = redisTemplate.opsForZSet().score(activeQueueKey, userId.toString());
         if (score == null || score < System.currentTimeMillis()) {
             throw new ServiceException(ErrorCode.QUEUE_SESSION_EXPIRED);
@@ -52,9 +52,5 @@ public class QueueInterceptor implements HandlerInterceptor {
             throw new ServiceException(ErrorCode.QUEUE_SESSION_EXPIRED);
         }
         return true;
-    }
-    //TODO 추후 RedisKey 관리 책임을 갖는 클래스로 분리 필요
-    public static String generateQueueActiveKey(Long scheduleId) {
-        return "queue:active:schedule:%d".formatted(scheduleId);
     }
 }

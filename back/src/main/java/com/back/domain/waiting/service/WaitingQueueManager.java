@@ -2,7 +2,6 @@ package com.back.domain.waiting.service;
 
 import com.back.global.exception.ErrorCode;
 import com.back.global.exception.ServiceException;
-import com.back.global.security.interceptor.QueueInterceptor;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.script.DefaultRedisScript;
@@ -94,7 +93,7 @@ public class WaitingQueueManager {
             Long.class
     );
     public long removeExpiredActiveUsers(Long scheduleId) {
-        String activeKey = QueueInterceptor.generateQueueActiveKey(scheduleId);
+        String activeKey = generateQueueActiveKey(scheduleId);
         Long removed = redisTemplate.opsForZSet()
                 .removeRangeByScore(activeKey, 0, System.currentTimeMillis());
         return removed == null ? 0L : removed;
@@ -107,9 +106,13 @@ public class WaitingQueueManager {
         return ACTIVE_TOKEN_KEY_PREFIX + scheduleId + ":" + userId;
     }
 
+    public static String generateQueueActiveKey(Long scheduleId) {
+        return "queue:active:schedule:%d".formatted(scheduleId);
+    }
+
     public void removeActiveUser(Long scheduleId, Long userId) {
         redisTemplate.opsForZSet().remove(
-                QueueInterceptor.generateQueueActiveKey(scheduleId),
+                generateQueueActiveKey(scheduleId),
                 userId.toString()
         );
         redisTemplate.delete(generateActiveTokenKey(scheduleId, userId));
@@ -131,7 +134,7 @@ public class WaitingQueueManager {
 
     public List<Long> addActiveUser(Long scheduleId, long capacity, int batchSize, Duration ttl) {
         String waitKey = generateWaitKey(scheduleId);
-        String activeKey = QueueInterceptor.generateQueueActiveKey(scheduleId);
+        String activeKey = generateQueueActiveKey(scheduleId);
         long now = System.currentTimeMillis();
         long expiredAt = now + ttl.toMillis();
 
