@@ -74,6 +74,9 @@ custom:
     refresh-token:
       prefix: "auth:refresh:"
       index-prefix: "auth:refresh:index:"
+  cookie:
+    secure: false
+    same-site: Lax
 app:
   rate-limit:
     seat-status:
