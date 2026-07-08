@@ -40,9 +40,7 @@ public class TicketService {
     private final ScheduleRepository scheduleRepository;
     private final ScheduleSeatRepository scheduleSeatRepository;
     private final StringRedisTemplate redisTemplate;
-    private final WaitingQueueService waitingQueueService;
     private final ApplicationEventPublisher eventPublisher;
-    private final ConcertService concertService;
 
     @Transactional
     public List<PaymentTicketResponse> createTicket(Long userId, Long scheduleId, PaymentTicketRequest request) {
@@ -73,15 +71,6 @@ public class TicketService {
             scheduleSeats.add(scheduleSeat);
         }
 
-        eventPublisher.publishEvent(
-                new PaymentCompletedEvent(
-                        request.concertId(),
-                        scheduleId,
-                        userId
-                )
-        );
-
-        return PaymentTicketResponse.from(scheduleSeat,schedule,ticket);
         validateSeatHold(userId, request.concertId(), scheduleId, sortedSeatHolds);
 
         scheduleSeats.forEach(seat -> seat.updateSeatStatus(SeatStatus.SOLD_OUT));
@@ -101,6 +90,14 @@ public class TicketService {
                 ))
                 .toList();
         ticketRepository.saveAll(tickets);
+
+        eventPublisher.publishEvent(
+                new PaymentCompletedEvent(
+                        request.concertId(),
+                        scheduleId,
+                        userId
+                )
+        );
 
         return IntStream.range(0, tickets.size())
                 .mapToObj(i -> PaymentTicketResponse.from(scheduleSeats.get(i), schedule, tickets.get(i)))
