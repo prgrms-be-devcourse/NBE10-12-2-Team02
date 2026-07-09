@@ -1,5 +1,6 @@
 package com.back.domain.user.entity;
 
+import com.back.global.jpa.converter.EncryptedStringConverter;
 import com.back.global.jpa.entity.BaseEntity;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
@@ -37,6 +38,7 @@ public class User extends BaseEntity {
     private LocalDate deletedAt;
 
     @Column(columnDefinition = "TEXT")
+    @Convert(converter = EncryptedStringConverter.class)
     private String oauthRefreshToken;
 
     private User(String loginId, String email, String password, String name, LoginType loginType, String oauthRefreshToken) {
