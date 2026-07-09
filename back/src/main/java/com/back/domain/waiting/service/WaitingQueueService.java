@@ -39,7 +39,10 @@ public class WaitingQueueService {
         validateUser(userId);
         concertService.validateConcertScheduleMatch(concertId, scheduleId);
 
-        long remainingSeats = scheduleSeatRepository.countBySchedule_ScheduleIdAndSeatStatus(scheduleId, SeatStatus.AVAILABLE);
+        long remainingSeats = scheduleSeatRepository.countBySchedule_ScheduleIdAndSeatStatusIn(
+                scheduleId,
+                List.of(SeatStatus.AVAILABLE, SeatStatus.HOLD)
+        );
         if (remainingSeats <= 0) {
             throw new ServiceException(ErrorCode.CONCERT_SOLD_OUT);
         }
