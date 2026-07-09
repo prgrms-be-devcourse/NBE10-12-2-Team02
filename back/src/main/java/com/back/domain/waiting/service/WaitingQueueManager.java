@@ -222,15 +222,26 @@ public class WaitingQueueManager {
         return (score != null) ? score.longValue() : 0L;
     }
 
+    private static final RedisScript<String> GET_ACTIVE_TOKEN_SCRIPT = new DefaultRedisScript<>(
+            """
+                    local score = redis.call('ZSCORE', KEYS[1], ARGV[1])
+                    if score and tonumber(score) > tonumber(ARGV[2]) then
+                        return redis.call('GET', KEYS[2])
+                    end
+                    return nil
+                    """,
+            String.class
+    );
+
     public String getActiveToken(Long scheduleId, Long userId) {
         String activeKey = generateQueueActiveKey(scheduleId);
-        String user = userId.toString();
-        Double score = redisTemplate.opsForZSet().score(activeKey, user);
+        String tokenKey = generateActiveTokenKey(scheduleId, userId);
 
-        if (score != null && score > System.currentTimeMillis()) {
-            return redisTemplate.opsForValue()
-                    .get(generateActiveTokenKey(scheduleId, userId));
-        }
-        return null;
+        return redisTemplate.execute(
+                GET_ACTIVE_TOKEN_SCRIPT,
+                List.of(activeKey, tokenKey),
+                userId.toString(),
+                String.valueOf(System.currentTimeMillis())
+        );
     }
 }
